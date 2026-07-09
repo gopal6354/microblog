@@ -1,5 +1,5 @@
 from fastapi import APIRouter,Request
-from config import templates
+from core.config import templates
 router = APIRouter()
 
 @router.get("/")

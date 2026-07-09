@@ -1,7 +1,8 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase,sessionmaker
+from core.config import settings
 
-DATABASE_URL = "postgresql://gopal:gopal123@localhost:5432/fastapi_db"
+DATABASE_URL = settings.DATABASE_URL
 
 engine = create_engine(DATABASE_URL)
 
