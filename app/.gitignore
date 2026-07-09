@@ -1,0 +1,36 @@
+# Virtual Environment
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment Variables
+.env
+
+# VS Code
+.vscode/
+
+# JetBrains IDEs
+.idea/
+
+# Pytest
+.pytest_cache/
+
+# Coverage
+.coverage
+htmlcov/
+
+# Alembic
+alembic/versions/*.pyc
+
+# Uploaded Files
+app/uploads/
+
+# Logs
+*.log
+
+# OS Files
+.DS_Store
+Thumbs.db
