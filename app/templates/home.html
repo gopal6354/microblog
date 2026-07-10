@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}
+EchoHub - Home
+{% endblock %}
+
+{% block content %}
+<!-- Home header -->
+
+<header class="feed-header">
+    <div class="feed-title">
+        <h3>Home</h3>
+        <button class="feed-refresh">
+
+            <!-- <i class="bi bi-stars"></i> -->
+
+        </button>
+    </div>
+</header>
+
+
+<!-- create post section -->
+
+{% include "partials/create_post.html"%}
+
+
+<!-- post card section  -->
+<section class="posts-container">
+    {% for i in range(1,11) %}
+        {% include "partials/post_card.html" %}
+    {% endfor %}
+</section>
+
+{% endblock %}
