@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}
+EchoHub | Profile
+{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/user_profile.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <!-- Profile Card -->
+    <div class="profile-card">
+
+        <!-- Cover -->
+        <div class="profile-cover"></div>
+
+        <!-- Avatar -->
+        <div class="profile-avatar-wrapper">
+            <img src="https://ui-avatars.com/api/?name=Gopal+Patil&background=0D8ABC&color=fff&size=300"
+                alt="Profile Picture"
+                class="profile-avatar">
+        </div>
+
+        <!-- Profile Content -->
+        <div class="profile-content">
+
+            <div class="d-flex justify-content-between align-items-start flex-wrap">
+
+                <div>
+
+                    <h2 class="mb-1">
+                        {{ user.full_name }}
+                    </h2>
+
+                    <p class="text-body-secondary mb-2">
+                        {{  user.username }}
+                    </p>
+
+                </div>
+
+                <a href="/profile/edit" class="btn btn-primary rounded-pill px-4">
+                    Edit Profile
+                </a>
+
+            </div>
+
+            <p class="bio mt-3">
+                {{ user.bio }}
+            </p>
+
+            <div class="profile-meta mt-3">
+
+                <span>📍 Surat, Gujarat</span>
+
+                <span>📅 {{ user.created_at }}</span>
+
+            </div>
+
+            <div class="profile-stats mt-4">
+
+                <div>
+                    <strong>23</strong>
+                    <span>Posts</span>
+                </div>
+
+                <div>
+                    <strong>152</strong>
+                    <span>Followers</span>
+                </div>
+
+                <div>
+                    <strong>98</strong>
+                    <span>Following</span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Posts -->
+
+    <div class="mt-5">
+
+        <h3 class="mb-4">
+            Recent Posts
+        </h3>
+
+        <div class="post-card">
+
+            <h5>
+                Learning FastAPI
+            </h5>
+
+            <p>
+                FastAPI is amazing! Today I learned JWT Authentication.
+            </p>
+
+            <small class="text-body-secondary">
+                2 hours ago
+            </small>
+
+        </div>
+
+        <div class="post-card">
+
+            <h5>
+                SQLAlchemy
+            </h5>
+
+            <p>
+                Successfully implemented relationships in my MicroBlog project.
+            </p>
+
+            <small class="text-body-secondary">
+                Yesterday
+            </small>
+
+        </div>
+
+        <div class="post-card">
+
+            <h5>
+                EchoHub
+            </h5>
+
+            <p>
+                Working on authentication using JWT and Cookies.
+            </p>
+
+            <small class="text-body-secondary">
+                3 days ago
+            </small>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block js %}
+<script src="{{ url_for('static', path='js/profile.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "auth/auth_base.html" %}
+
+{% block title %}
+EchoHub - Verify OTP
+{% endblock %}
+
+{% block content %}
+<section class="auth-container">
+    <div class="auth-card">
+
+        <div class="auth-logo">
+            <h1>EchoHub</h1>
+            <p>
+                We've sent a verification code to your email.
+                Enter the 6-digit OTP below to activate your account.
+            </p>
+        </div>
+
+        <form action="/verify-otp" method="POST" autocomplete="off">
+
+            <!-- Pass email if needed -->
+            <input type="hidden" name="email" value="{{ email }}">
+
+            <div class="mb-4">
+                <label for="otp" class="form-label">
+                    Verification Code
+                </label>
+
+                <input
+                    type="text"
+                    id="otp"
+                    name="otp"
+                    class="form-control text-center"
+                    placeholder="Enter 6-digit OTP"
+                    maxlength="6"
+                    minlength="6"
+                    pattern="[0-9]{6}"
+                    inputmode="numeric"
+                    required
+                >
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">
+                Verify Account
+            </button>
+
+        </form>
+
+        <div class="auth-footer mt-4">
+            <p class="mb-2">
+                Didn't receive the code?
+            </p>
+
+            <a href="/resend-otp">
+                Resend OTP
+            </a>
+        </div>
+
+    </div>
+</section>
+{% endblock %}
