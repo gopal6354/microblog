@@ -1,3 +1,17 @@
-<div class="container-fluid mb-3">
+{% if request.session.get("_messages") %}
 
-</div>
+    {% set flash = request.session.get("_messages") %}
+
+    <div class="alert alert-{{ flash.category }} alert-dismissible fade show" role="alert">
+
+        {{ flash.message }}
+
+        <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="alert">
+        </button>
+
+    </div>
+
+{% endif %}

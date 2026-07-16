@@ -1,0 +1,54 @@
+<form action="/user-blog/{{ blog.id }}/edit"
+      method="post"
+      enctype="multipart/form-data">
+
+    <div class="mb-3">
+        <label>Content</label>
+
+        <textarea
+            name="content"
+            class="form-control"
+            rows="5"
+            required>{{ blog.content }}</textarea>
+    </div>
+
+    <div class="mb-3">
+
+        <label>Current Image</label>
+
+        {% if blog.image %}
+            <img src="{{ url_for('static', path=blog.image) }}"
+                 class="img-fluid rounded mb-2">
+        {% endif %}
+
+        <input
+            type="file"
+            name="image"
+            class="form-control"
+            accept="image/*">
+
+    </div>
+
+    <div class="mb-3">
+
+        <label>Current Video</label>
+
+        {% if blog.video %}
+            <video controls class="w-100 rounded mb-2">
+                <source src="{{ url_for('static', path=blog.video) }}">
+            </video>
+        {% endif %}
+
+        <input
+            type="file"
+            name="video"
+            class="form-control"
+            accept="video/*">
+
+    </div>
+
+    <button class="btn btn-primary">
+        Update Blog
+    </button>
+
+</form>

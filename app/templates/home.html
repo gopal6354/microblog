@@ -26,7 +26,7 @@ EchoHub - Home
 
 <!-- post card section  -->
 <section class="posts-container">
-    {% for i in range(1,11) %}
+    {% for blog in blogs  %}
         {% include "partials/post_card.html" %}
     {% endfor %}
 </section>

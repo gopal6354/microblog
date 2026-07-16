@@ -3,51 +3,98 @@
     <div class="post-header">
 
         <div class="avatar">
-            <i class="bi bi-person-fill"></i>
+
+            {% if blog.user.profile_image %}
+
+                <img
+                    src="{{ url_for('static', path=blog.user.profile_image) }}"
+                    alt="{{ blog.user.username }}"
+                    class="avatar-img">
+
+            {% else %}
+
+                <i class="bi bi-person-fill"></i>
+
+            {% endif %}
+
         </div>
 
         <div class="post-user">
+
             <div class="user-top">
-                <h6>Gopal Patil</h6>
-                <small>@gopal · 2h</small>
+
+                <h6>{{ blog.user.full_name or blog.user.username }}</h6>
+
+                <small>
+                    @{{ blog.user.username }}
+                </small>
+
             </div>
+
         </div>
 
         <button class="more-btn">
             <i class="bi bi-three-dots-vertical"></i>
         </button>
+
     </div>
 
 
     <div class="post-content">
+
         <p>
-            🚀 Welcome to EchoHub!
+            {{ blog.content }}
         </p>
-        <p>
-            This is our first dummy post while building the frontend.
-        </p>
+
+        {% if blog.image %}
+
+        <img
+            src="{{ url_for('static', path=blog.image) }}"
+            class="img-fluid rounded mt-3"
+            alt="Blog Image">
+
+        {% endif %}
+
+
+        {% if blog.video %}
+
+        <video
+            class="w-100 rounded mt-3"
+            controls>
+
+            <source
+                src="{{ url_for('static', path=blog.video) }}"
+                type="video/mp4">
+
+            Your browser does not support the video tag.
+
+        </video>
+
+        {% endif %}
+
     </div>
 
 
     <div class="post-actions">
+
         <button>
             <i class="bi bi-chat"></i>
-            <span>10</span>
+            <span>0</span>
         </button>
 
         <button>
             <i class="bi bi-repeat"></i>
-            <span>5</span>
+            <span>0</span>
         </button>
 
         <button>
             <i class="bi bi-heart"></i>
-            <span>25</span>
+            <span>0</span>
         </button>
 
         <button>
             <i class="bi bi-bar-chart"></i>
-            <span>120</span>
+            <span>0</span>
         </button>
 
         <button>

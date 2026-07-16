@@ -43,7 +43,7 @@ def create_token(data: dict, expire_delta: timedelta):
 
 def create_access_token(data: dict):
     return create_token(
-        {**data, "type": "access"}, timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_TIME)
+        {**data, "type": "access"}, timedelta(days=settings.ACCESS_TOKEN_EXPIRE_TIME)
     )
 
 
