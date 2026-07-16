@@ -16,6 +16,12 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_TIME: int
     DATABASE_URL: str
 
+    EMAIL_HOST: str
+    EMAIL_PORT: int
+
+    EMAIL_ADDRESS: str
+    EMAIL_PASSWORD: str
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 

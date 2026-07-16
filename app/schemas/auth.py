@@ -15,3 +15,11 @@ class UserLogin(BaseModel):
 
 class Verify_otp(BaseModel):
     otp: str
+
+
+class UpdateUserProfile(BaseModel):
+    username: str
+    full_name: str
+    bio: str
+    city: str
+    state: str

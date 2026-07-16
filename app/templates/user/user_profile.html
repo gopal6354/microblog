@@ -42,7 +42,7 @@ EchoHub | Profile
 
                 </div>
 
-                <a href="/profile/edit" class="btn btn-primary rounded-pill px-4">
+                <a href="/profile-edit" class="btn btn-primary rounded-pill px-4">
                     Edit Profile
                 </a>
 
@@ -54,9 +54,9 @@ EchoHub | Profile
 
             <div class="profile-meta mt-3">
 
-                <span>📍 Surat, Gujarat</span>
+                <span>📍 {{ user.city }} {{ user.state }}</span>
 
-                <span>📅 {{ user.created_at }}</span>
+                <!-- <span>📅 {{ user.created_at }}</span> -->
 
             </div>
 

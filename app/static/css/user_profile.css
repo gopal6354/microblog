@@ -209,3 +209,134 @@
         gap: 20px;
     }
 }
+
+
+
+/* ==========================================
+   Edit Profile Card
+========================================== */
+
+.edit-profile-card {
+    max-width: 720px;
+    margin: 0 auto;
+    background: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 18px;
+    padding: 2rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, .08);
+}
+
+
+/* ==========================================
+   Heading
+========================================== */
+
+.edit-profile-card h2 {
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+}
+
+
+/* ==========================================
+   Profile Avatar
+========================================== */
+
+.profile-avatar {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 5px solid var(--bs-body-bg);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, .15);
+}
+
+
+/* ==========================================
+   Labels
+========================================== */
+
+.form-label {
+    font-weight: 600;
+    margin-bottom: .5rem;
+}
+
+
+/* ==========================================
+   Inputs
+========================================== */
+
+.form-control {
+    border-radius: 12px;
+    padding: .75rem 1rem;
+    border: 1px solid var(--bs-border-color);
+    transition: all .25s ease;
+}
+
+.form-control:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 .2rem rgba(var(--bs-primary-rgb), .15);
+}
+
+
+/* ==========================================
+   Textarea
+========================================== */
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 120px;
+}
+
+
+/* ==========================================
+   File Input
+========================================== */
+
+input[type="file"] {
+    cursor: pointer;
+}
+
+
+/* ==========================================
+   Buttons
+========================================== */
+
+.btn {
+    border-radius: 999px;
+    padding: .65rem 1.75rem;
+    font-weight: 600;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+}
+
+.btn-outline-secondary:hover {
+    transform: translateY(-1px);
+}
+
+
+/* ==========================================
+   Responsive
+========================================== */
+
+@media (max-width: 768px) {
+
+    .edit-profile-card {
+        padding: 1.5rem;
+    }
+
+    .profile-avatar {
+        width: 100px;
+        height: 100px;
+    }
+
+    .d-flex.justify-content-end {
+        flex-direction: column;
+    }
+
+    .d-flex.justify-content-end .btn {
+        width: 100%;
+    }
+
+}
