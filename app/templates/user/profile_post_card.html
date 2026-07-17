@@ -18,9 +18,26 @@
         {% endif %}
 
 
+        {% if blog.video %}
+
+        <video class="w-100 rounded mt-3" controls>
+
+            <source src="{{ url_for('static', path=blog.video) }}" type="video/mp4">
+
+            Your browser does not support the video tag.
+
+        </video>
+
+        {% endif %}
+
+
         <small class="text-body-secondary">
-            {{ blog.created_at.strftime("%d %b %Y") }}
-        </small>
+
+            <small class="text-body-secondary">
+
+                <small class="text-body-secondary">
+                    {{ blog.created_at.strftime("%d %b %Y") }}
+                </small>
 
     </div>
 

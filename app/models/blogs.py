@@ -11,7 +11,9 @@ class Blog(Base):
     __tablename__ = "blogs"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     content: Mapped[str] = mapped_column(Text, nullable=False)
     image: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     video: Mapped[Optional[str]] = mapped_column(String, nullable=True)

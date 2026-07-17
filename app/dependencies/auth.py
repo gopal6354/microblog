@@ -1,41 +1,44 @@
 from fastapi import HTTPException, Depends, Request, status
-from jose import jwt, JWTError
-from models.user import User
+from jose import JWTError
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from database import get_db
-from core.config import settings
+from models.user import User
+from core.config import decode_token
 
 
-def get_current_user(request: Request, session: Session = Depends(get_db)):
+def get_current_user(
+    request: Request,
+    session: Session = Depends(get_db),
+):
     token = request.cookies.get("access_token")
+
     if not token:
-        print("token not found")
         raise HTTPException(
-            detail="not authorized", status_code=status.HTTP_401_UNAUTHORIZED
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized."
         )
+
     try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
+        payload = decode_token(token)
 
         user_id = payload.get("sub")
         token_type = payload.get("type")
 
         if not user_id or token_type != "access":
             raise HTTPException(
-                detail="token no valid", status_code=status.HTTP_401_UNAUTHORIZED
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token."
             )
 
         user = session.scalar(select(User).where(User.id == int(user_id)))
+
         if not user:
             raise HTTPException(
-                detail="user not found", status_code=status.HTTP_404_NOT_FOUND
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
             )
+
         return user
 
     except JWTError:
         raise HTTPException(
-            detail="token not valid or expired",
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired or invalid."
         )

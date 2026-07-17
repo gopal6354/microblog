@@ -13,7 +13,7 @@ def blogs(request: Request, session: Session = Depends(get_db)):
     blogs = session.scalars(
         select(Blog).options(selectinload(Blog.user)).order_by(Blog.created_at.desc())
     ).all()
-    print("create blog")
+
     return templates.TemplateResponse(
         request=request, name="home.html", context={"blogs": blogs}
     )

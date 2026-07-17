@@ -1,7 +1,7 @@
 from database import Base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from enum import Enum
-from sqlalchemy import Enum as SQLEnum, String
+from sqlalchemy import Enum as SQLEnum, String, DateTime, Boolean
 from datetime import datetime
 from typing import Optional
 
@@ -34,5 +34,9 @@ class User(Base):
     bio: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)
     profile_image: Mapped[Optional[str]] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
-
-    blogs = relationship("Blog", back_populates="user")
+    otp: Mapped[str | None] = mapped_column(nullable=True)
+    otp_expiry: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    otp_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    blogs = relationship("Blog", back_populates="user", cascade="all,delete-orphan")

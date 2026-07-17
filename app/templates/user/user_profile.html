@@ -48,7 +48,7 @@ EchoHub | Profile
             </div>
 
             <p class="bio mt-3">
-                {{ user.bio }}
+                {{ user.bio | replace('\n', '<br>') | safe }}
             </p>
 
             <div class="profile-meta mt-3">

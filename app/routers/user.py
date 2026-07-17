@@ -21,8 +21,6 @@ def user_profile_page(
     sesssion: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    print("User profile route called")
-    print(current_user)
     # user = sesssion.scalars(select(User).where((User.username)))
     return templates.TemplateResponse(
         request=request, name="/user/user_profile.html", context={"user": current_user}

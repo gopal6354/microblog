@@ -60,7 +60,7 @@
 
             </li>
 
-
+            {% if request.state.user %}
 
             <li>
 
@@ -88,6 +88,20 @@
 
             </li>
             <li>
+
+                <a href="/logout">
+
+                    <i class="bi bi-box-arrow-right"></i>
+
+                    <span>Logout</span>
+
+                </a>
+
+            </li>
+
+
+            {% else %}
+            <li>
                 <a href="/login">
                     <i class="bi bi-box-arrow-in-right"></i>
                     <span>Login</span>
@@ -101,19 +115,8 @@
                 </a>
             </li>
 
+            {% endif %}
 
-
-            <li>
-
-                <a href="/logout">
-
-                    <i class="bi bi-box-arrow-right"></i>
-
-                    <span>Logout</span>
-
-                </a>
-
-            </li>
 
         </ul>
 

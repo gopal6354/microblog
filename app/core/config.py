@@ -51,3 +51,8 @@ def create_refresh_token(data: dict):
     return create_token(
         {**data, "type": "refresh"}, timedelta(days=settings.REFRESH_TOKEN_EXPIRE_TIME)
     )
+
+
+def decode_token(token: str):
+    token = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    return token
