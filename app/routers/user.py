@@ -43,7 +43,7 @@ def edit_user_profile(
     session: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    for k, val in user.model_dump().items():
+    for k, val in user.model_dump(exclude_unset=True).items():
         setattr(current_user, k, val)
 
     session.commit()

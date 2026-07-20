@@ -21,16 +21,18 @@ from utils.otp import generate_otp
 from datetime import datetime, timedelta, UTC
 from sqlalchemy.exc import IntegrityError
 from models.user import StatusChoice
-from utils import email_service
+from utils import email_service, otp_service
 
 router = APIRouter()
 
 
+# register page
 @router.get("/register")
 def regiter_page(request: Request):
     return templates.TemplateResponse(request=request, name="/auth/register.html")
 
 
+# register page
 @router.post("/register")
 def regiter_user(
     request: Request,
@@ -61,9 +63,6 @@ def regiter_user(
     new_user = User(
         username=user.username, email=user.email, hashed_password=hashe_password
     )
-    stored_otp = generate_otp()
-    new_user.otp = stored_otp
-    new_user.otp_expiry = datetime.now(UTC) + timedelta(minutes=5)
 
     try:
         session.add(new_user)
@@ -78,20 +77,31 @@ def regiter_user(
             name="auth/register.html",
             context={"error": "Email or uername already exists."},
         )
-    request.session["verify_email"] = new_user.email
-    background_tasks.add_task(
-        email_service.send_verification_otp_email, new_user, stored_otp
+
+    except Exception:
+        session.rollback()
+        raise
+
+    otp_service.generate_and_send_otp(
+        user=new_user,
+        db=session,
+        background_tasks=background_tasks,
+        email_sender=email_service.send_verification_otp_email,
     )
 
+    request.session["otp_email"] = new_user.email
+    request.session["otp_flow"] = "verification"
+
     return RedirectResponse(url="/verify-otp", status_code=status.HTTP_303_SEE_OTHER)
-    # return templates.TemplateResponse(request=request,name="auth/register.html")
 
 
+# login page
 @router.get("/login")
 def login_page(request: Request):
     return templates.TemplateResponse(request=request, name="/auth/login.html")
 
 
+# login page
 @router.post("/login")
 def login_user(
     request: Request,
@@ -132,7 +142,7 @@ def login_user(
 
             session.commit()
 
-            request.session["verify_email"] = exist_user.email
+            request.session["otp_email"] = exist_user.email
 
             background_tasks.add_task(
                 email_service.send_verification_otp_email,
@@ -140,7 +150,8 @@ def login_user(
                 new_otp,
             )
 
-        request.session["verify_email"] = exist_user.email
+        request.session["otp_email"] = exist_user.email
+        request.session["otp_flow"] = "verification"
 
         return RedirectResponse(
             url="/verify-otp",
@@ -164,19 +175,23 @@ def login_user(
     return response
 
 
+# otp verify page
 @router.get("/verify-otp")
 def verify_otp_page(request: Request):
-    if "verify_email" not in request.session:
-        print("otp not verify")
+    if request.session.get("otp_flow") != "verification" or not request.session.get(
+        "otp_email"
+    ):
         return RedirectResponse(url="/register", status_code=status.HTTP_303_SEE_OTHER)
+
     return templates.TemplateResponse(request=request, name="/auth/verify_otp.html")
 
 
+# otp verify page
 @router.post("/verify-otp")
 def verify_otp(
     request: Request, otp: str = Form(...), session: Session = Depends(get_db)
 ):
-    email = request.session.get("verify_email")
+    email = request.session.get("otp_email")
     if not email:
         return RedirectResponse(url="/register", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -211,7 +226,8 @@ def verify_otp(
     db_user.otp_expiry = None
 
     session.commit()
-    request.session.pop("verify_email", None)
+    request.session.pop("otp_email", None)
+    request.session.pop("otp_flow", None)
 
     return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -239,21 +255,15 @@ def forget_password(
             context={"error": "User with this email does not exist."},
         )
 
-    otp = generate_otp()
+    request.session["otp_email"] = user.email
+    request.session["otp_flow"] = "reset_password"
 
-    user.otp = otp
-    user.otp_expiry = datetime.now(UTC) + timedelta(minutes=5)
-
-    session.commit()
-
-    request.session["reset_email"] = user.email
-
-    background_tasks.add_task(
-        email_service.send_reset_password_otp_email,
-        user,
-        otp,
+    otp_service.generate_and_send_otp(
+        user=user,
+        db=session,
+        background_tasks=background_tasks,
+        email_sender=email_service.send_reset_password_otp_email,
     )
-
     return RedirectResponse(
         url="/verify-reset-otp",
         status_code=status.HTTP_303_SEE_OTHER,
@@ -262,9 +272,9 @@ def forget_password(
 
 @router.get("/verify-reset-otp")
 def verify_reset_otp_page(request: Request):
-    email = request.session.get("reset_email")
-
-    if not email:
+    if request.session.get("otp_flow") != "reset_password" or not request.session.get(
+        "otp_email"
+    ):
         return RedirectResponse(
             url="/forget-password",
             status_code=status.HTTP_303_SEE_OTHER,
@@ -272,11 +282,7 @@ def verify_reset_otp_page(request: Request):
 
     return templates.TemplateResponse(
         request=request,
-        name="/auth/forget_password.html",
-        context={
-            "show_otp": True,
-            "email": email,
-        },
+        name="auth/verify_reset_otp.html",
     )
 
 
@@ -286,7 +292,7 @@ def verify_reset_otp(
     otp: str = Form(...),
     session: Session = Depends(get_db),
 ):
-    email = request.session.get("reset_email")
+    email = request.session.get("otp_email")
 
     if not email:
         return templates.TemplateResponse(
@@ -307,7 +313,7 @@ def verify_reset_otp(
     if not user.otp or not user.otp_expiry:
         return templates.TemplateResponse(
             request=request,
-            name="/auth/verify_otp.html",
+            name="/auth/verify_reset_otp.html",
             context={"error": "OTP not found."},
         )
 
@@ -318,20 +324,19 @@ def verify_reset_otp(
 
         return templates.TemplateResponse(
             request=request,
-            name="/auth/verify_otp.html",
+            name="/auth/verify_reset_otp.html",
             context={"error": "OTP expired."},
         )
 
     if otp != user.otp:
         return templates.TemplateResponse(
             request=request,
-            name="/auth/verify_otp.html",
+            name="/auth/verify_reset_otp.html",
             context={"error": "Invalid OTP."},
         )
 
-    # OTP verified successfully
     request.session["reset_verified"] = True
-
+    request.session["otp_flow"] = "reset_password"
     user.otp = None
     user.otp_expiry = None
 
@@ -344,12 +349,19 @@ def verify_reset_otp(
 
 @router.get("/reset-password")
 def reset_password_page(request: Request):
-    if not request.session.get("reset_verified"):
+    print("session data", request.session)
+    if request.session.get("otp_flow") != "reset_password" or not request.session.get(
+        "reset_verified"
+    ):
         return RedirectResponse(
-            url="/forget-password", status_code=status.HTTP_303_SEE_OTHER
+            url="/forget-password",
+            status_code=status.HTTP_303_SEE_OTHER,
         )
 
-    return templates.TemplateResponse(request=request, name="/auth/reset_password.html")
+    return templates.TemplateResponse(
+        request=request,
+        name="auth/reset_password.html",
+    )
 
 
 @router.post("/reset-password")
@@ -359,6 +371,12 @@ def reset_password(
     confirm_password: str = Form(...),
     session: Session = Depends(get_db),
 ):
+    if not request.session.get("reset_verified"):
+        return RedirectResponse(
+            url="/forget-password",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
     if password != confirm_password:
         return templates.TemplateResponse(
             request=request,
@@ -366,8 +384,8 @@ def reset_password(
             context={"error": "Password does not match."},
         )
 
-    email = request.session.get("reset_email")
-
+    email = request.session.get("otp_email")
+    print(email)
     if not email:
         return RedirectResponse(
             url="/forget-password", status_code=status.HTTP_303_SEE_OTHER
@@ -380,16 +398,75 @@ def reset_password(
 
     user.hashed_password = hash_password(password)
 
+    user.otp = None
+    user.otp_expiry = None
+
     # Clear reset session after successful password change
-    request.session.pop("reset_email", None)
+    request.session.pop("otp_email", None)
+    request.session.pop("otp_flow", None)
+    request.session.pop("reset_verified", None)
 
     session.commit()
 
     return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
 
 
+@router.post("/resend-otp")
+def resend_otp(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    session: Session = Depends(get_db),
+):
+    email = request.session.get("otp_email")
+    flow = request.session.get("otp_flow")
+
+    if not email or not flow:
+        return RedirectResponse(
+            url="/login",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    user = session.scalar(select(User).where(User.email == email))
+
+    if not user:
+        return RedirectResponse(
+            url="/login",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    if flow == "verification":
+        email_sender = email_service.send_verification_otp_email
+        redirect_url = "/verify-otp"
+
+    elif flow == "reset_password":
+        email_sender = email_service.send_reset_password_otp_email
+        redirect_url = "/verify-reset-otp"
+
+    else:
+        return RedirectResponse(
+            url="/login",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    otp_service.generate_and_send_otp(
+        user=user,
+        db=session,
+        background_tasks=background_tasks,
+        email_sender=email_sender,
+    )
+
+    return RedirectResponse(
+        url=redirect_url,
+        status_code=status.HTTP_303_SEE_OTHER,
+    )
+
+
+# logout
 @router.get("/logout")
-def logout(request=Request):
+def logout(request: Request):
+    request.session.pop("otp_email", None)
+    request.session.pop("otp_flow", None)
+    request.session.pop("reset_verified", None)
     response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
 
     response.delete_cookie("access_token")

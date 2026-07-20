@@ -18,8 +18,8 @@ class Verify_otp(BaseModel):
 
 
 class UpdateUserProfile(BaseModel):
-    username: str
-    full_name: str
-    bio: str
-    city: str
-    state: str
+    username: str | None = None
+    full_name: str | None = None
+    bio: str | None = None
+    city: str | None = None
+    state: str | None = None

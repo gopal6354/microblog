@@ -24,7 +24,6 @@ def send_email(receiver_email: str, subject: str, body: str):
             server.login(settings.EMAIL_ADDRESS, settings.EMAIL_PASSWORD)
 
             server.send_message(message)
-            server.send_message(message)
 
             print("Email sent successfully!")
 

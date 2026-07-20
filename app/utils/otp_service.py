@@ -1,18 +1,34 @@
-from datetime import datetime, timedelta, UTC
-from models.user import User
+from datetime import datetime, timedelta, timezone
+from typing import Callable
+from fastapi import BackgroundTasks
 from sqlalchemy.orm import Session
-from utils.otp import generate_otp
+from models.user import User
+import random
 
 
-def generate_and_save_otp(
+def generate_otp():
+    otp = "".join(str(random.randint(0, 9)) for _ in range(6))
+    print(otp)
+    return otp
+
+
+def generate_and_send_otp(
+    *,
     user: User,
-    session: Session,
+    db: Session,
+    background_tasks: BackgroundTasks,
+    email_sender: Callable[[User, str], None],
 ):
     otp = generate_otp()
 
     user.otp = otp
-    user.otp_expiry = datetime.now(UTC) + timedelta(minutes=5)
+    user.otp_expiry = datetime.now(timezone.utc) + timedelta(minutes=5)
 
-    session.commit()
+    db.commit()
+    db.refresh(user)
 
-    return otp
+    background_tasks.add_task(
+        email_sender,
+        user,
+        otp,
+    )

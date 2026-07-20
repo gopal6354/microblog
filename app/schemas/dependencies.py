@@ -17,12 +17,23 @@ def register_form(
 
 
 def update_profile_form(
-    username: str = Form(...),
-    fullname: str = Form(...),
-    bio: str = Form(...),
-    city: str = Form(...),
-    state: str = Form(...),
+    username: str | None = Form(None),
+    fullname: str | None = Form(None),
+    bio: str | None = Form(None),
+    city: str | None = Form(None),
+    state: str | None = Form(None),
 ):
-    return UpdateUserProfile(
-        username=username, full_name=fullname, bio=bio, city=city, state=state
-    )
+    data = {}
+
+    if username is not None:
+        data["username"] = username
+    if fullname is not None:
+        data["full_name"] = fullname
+    if bio is not None:
+        data["bio"] = bio
+    if city is not None:
+        data["city"] = city
+    if state is not None:
+        data["state"] = state
+
+    return UpdateUserProfile(**data)
