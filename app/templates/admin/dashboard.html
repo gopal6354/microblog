@@ -1,0 +1,332 @@
+{% extends "admin/admin_base.html" %}
+
+
+
+{% block title %}
+
+Dashboard | EchoHub Admin
+
+{% endblock %}
+
+
+
+
+
+{% block content %}
+
+
+
+<div class="dashboard-header mb-4">
+
+
+    <h2>
+
+        Dashboard
+
+    </h2>
+
+
+    <p class="text-muted">
+
+        Welcome to EchoHub Admin Panel
+
+    </p>
+
+
+</div>
+
+
+
+
+
+
+<!-- Statistics Cards -->
+
+
+<div class="row g-4">
+
+
+    <div class="col-md-6 col-xl-3">
+
+
+        <div class="card admin-card">
+
+
+            <div class="card-body">
+
+
+                <div class="icon-box bg-primary">
+
+                    <i class="bi bi-people"></i>
+
+                </div>
+
+
+
+                <h6>
+                    Total Users
+                </h6>
+
+
+                <h2>
+                    250
+                </h2>
+
+
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+
+
+
+    <div class="col-md-6 col-xl-3">
+
+
+        <div class="card admin-card">
+
+
+            <div class="card-body">
+
+
+                <div class="icon-box bg-success">
+
+                    <i class="bi bi-file-earmark-text"></i>
+
+                </div>
+
+
+
+                <h6>
+                    Total Blogs
+                </h6>
+
+
+                <h2>
+                    560
+                </h2>
+
+
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+
+
+
+
+    <div class="col-md-6 col-xl-3">
+
+
+        <div class="card admin-card">
+
+
+            <div class="card-body">
+
+
+                <div class="icon-box bg-danger">
+
+                    <i class="bi bi-flag"></i>
+
+                </div>
+
+
+
+                <h6>
+                    Pending Reports
+                </h6>
+
+
+                <h2>
+                    25
+                </h2>
+
+
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+
+
+
+
+    <div class="col-md-6 col-xl-3">
+
+
+        <div class="card admin-card">
+
+
+            <div class="card-body">
+
+
+                <div class="icon-box bg-warning">
+
+                    <i class="bi bi-person-check"></i>
+
+                </div>
+
+
+
+                <h6>
+                    Activation Requests
+                </h6>
+
+
+                <h2>
+                    12
+                </h2>
+
+
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+
+</div>
+
+
+
+
+
+
+<!-- Recent Activity -->
+
+
+<div class="card mt-5 admin-card">
+
+
+    <div class="card-header">
+
+        <h5>
+            Recent Activity
+        </h5>
+
+    </div>
+
+
+
+
+    <div class="card-body">
+
+
+        <table class="table table-hover">
+
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        User
+                    </th>
+
+                    <th>
+                        Action
+                    </th>
+
+                    <th>
+                        Date
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+
+            <tbody>
+
+
+                <tr>
+
+                    <td>
+                        Gopal
+                    </td>
+
+                    <td>
+                        Created a new blog
+                    </td>
+
+                    <td>
+                        21 July 2026
+                    </td>
+
+                </tr>
+
+
+
+                <tr>
+
+                    <td>
+                        Rahul
+                    </td>
+
+                    <td>
+                        Reported a blog
+                    </td>
+
+                    <td>
+                        20 July 2026
+                    </td>
+
+                </tr>
+
+
+
+                <tr>
+
+                    <td>
+                        Amit
+                    </td>
+
+                    <td>
+                        Requested activation
+                    </td>
+
+                    <td>
+                        19 July 2026
+                    </td>
+
+                </tr>
+
+
+            </tbody>
+
+
+        </table>
+
+
+    </div>
+
+
+</div>
+
+
+
+
+
+{% endblock %}
