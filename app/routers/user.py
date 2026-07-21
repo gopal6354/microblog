@@ -18,17 +18,30 @@ router = APIRouter()
 @router.get("/user-profile")
 def user_profile_page(
     request: Request,
-    sesssion: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_db),
+    current_user: User | None = Depends(get_current_user),
 ):
+    if not current_user:
+        return RedirectResponse("/login", status_code=303)
+
+    blogs = current_user.blogs
+    post_count = len(blogs)
+
     # user = sesssion.scalars(select(User).where((User.username)))
     return templates.TemplateResponse(
-        request=request, name="/user/user_profile.html", context={"user": current_user}
+        request=request,
+        name="/user/user_profile.html",
+        context={"user": current_user, "post_count": post_count},
     )
 
 
 @router.get("/profile-edit")
-def edit_profile_page(request: Request, current_user: User = Depends(get_current_user)):
+def edit_profile_page(
+    request: Request, current_user: User | None = Depends(get_current_user)
+):
+    if not current_user:
+        return RedirectResponse("/login", status_code=303)
+
     return templates.TemplateResponse(
         request=request,
         name="/user/update_user_profile.html",
@@ -41,10 +54,17 @@ def edit_user_profile(
     request: Request,
     user: UpdateUserProfile = Depends(update_profile_form),
     session: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    profile_image: UploadFile | None = File(None),
+    current_user: User | None = Depends(get_current_user),
 ):
+    if not current_user:
+        return RedirectResponse("/login", status_code=303)
+
     for k, val in user.model_dump(exclude_unset=True).items():
         setattr(current_user, k, val)
+
+    if profile_image and profile_image.filename:
+        current_user.profile_image = save_file(profile_image, IMAGE_DIR)
 
     session.commit()
     print("data save")
@@ -57,17 +77,26 @@ def user_blogs(
     request: Request,
     tab: str = "posts",
     session: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User | None = Depends(get_current_user),
 ):
+    if not current_user:
+        return RedirectResponse("/login", status_code=303)
+
     blogs = session.scalars(
         select(Blog)
         .where(Blog.user_id == current_user.id)
         .order_by(Blog.created_at.desc())
     ).all()
+    post_count = len(blogs)
     return templates.TemplateResponse(
         request=request,
         name="/user/user_profile.html",
-        context={"user": current_user, "blogs": blogs, "active_tab": tab},
+        context={
+            "user": current_user,
+            "blogs": blogs,
+            "post_count": post_count,
+            "active_tab": tab,
+        },
     )
 
 
@@ -75,8 +104,11 @@ def user_blogs(
 def delete_blog(
     blog_id: int,
     session: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User | None = Depends(get_current_user),
 ):
+    if not current_user:
+        return RedirectResponse("/login", status_code=303)
+
     blog = session.get(Blog, blog_id)
 
     if blog and blog.user_id == current_user.id:
@@ -94,8 +126,11 @@ def edit_blog_page(
     request: Request,
     blog_id: int,
     session: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User | None = Depends(get_current_user),
 ):
+    if not current_user:
+        return RedirectResponse("/login", status_code=303)
+
     blog = session.get(Blog, blog_id)
 
     if not blog or blog.user_id != current_user.id:
@@ -123,8 +158,11 @@ async def update_blog(
     image: UploadFile | None = File(None),
     video: UploadFile | None = File(None),
     session: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User | None = Depends(get_current_user),
 ):
+    if not current_user:
+        return RedirectResponse("/login", status_code=303)
+
     blog = session.get(Blog, blog_id)
 
     if not blog or blog.user_id != current_user.id:

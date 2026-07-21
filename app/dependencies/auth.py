@@ -14,9 +14,7 @@ def get_current_user(
     token = request.cookies.get("access_token")
 
     if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized."
-        )
+        return None
 
     try:
         payload = decode_token(token)

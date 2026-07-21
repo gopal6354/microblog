@@ -20,8 +20,13 @@ EchoHub | Profile
 
         <!-- Avatar -->
         <div class="profile-avatar-wrapper">
-            <img src="https://ui-avatars.com/api/?name=Gopal+Patil&background=0D8ABC&color=fff&size=300"
-                alt="Profile Picture" class="profile-avatar">
+            {% if user.profile_image %}
+            <img src="{{ url_for('static', path=user.profile_image) }}" alt="{{ user.username }}"
+                class="profile-avatar">
+            {% else %}
+            <img src="https://ui-avatars.com/api/?name={{ user.full_name or user.username }}&background=0D8ABC&color=fff&size=300"
+                alt="{{ user.username }}" class="profile-avatar">
+            {% endif %}
         </div>
 
         <!-- Profile Content -->
@@ -62,7 +67,7 @@ EchoHub | Profile
             <div class="profile-stats mt-4">
 
                 <div>
-                    <strong>23</strong>
+                    <strong>{{ post_count }}</strong>
                     <span>Posts</span>
                 </div>
 
@@ -80,12 +85,12 @@ EchoHub | Profile
 
         </div>
 
-  <div class="profile-nav">
+        <div class="profile-nav">
 
-    <a href="/user-blogs?tab=posts">
-        Posts
-    </a>
-<!--
+            <a href="/user-blogs?tab=posts">
+                Posts
+            </a>
+            <!--
     <a href="/user-blogs?tab=likes"
        class="{% if active_tab == 'likes' %}active{% endif %}">
         Likes
@@ -96,24 +101,24 @@ EchoHub | Profile
         Media
     </a>
  -->
-</div>
+        </div>
 
-<div class="profile-tab-content">
+        <div class="profile-tab-content">
 
-    {% if active_tab == "posts" %}
+            {% if active_tab == "posts" %}
 
-        {% for blog in blogs %}
+            {% for blog in blogs %}
             {% include "user/profile_post_card.html" %}
-        {% else %}
+            {% else %}
 
             <div class="empty-posts">
                 <h5>No Posts Yet</h5>
                 <p>Share your first blog with the EchoHub community.</p>
             </div>
 
-        {% endfor %}
+            {% endfor %}
 
-    {% endif %}
+            {% endif %}
 
-</div>
-{% endblock %}
+        </div>
+        {% endblock %}

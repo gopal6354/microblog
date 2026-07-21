@@ -22,3 +22,4 @@ class Blog(Base):
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
     user = relationship("User", back_populates="blogs")
+    likes = relationship("Like", back_populates="blog", cascade="all,delete-orphan")

@@ -6,14 +6,12 @@
 
             {% if blog.user.profile_image %}
 
-                <img
-                    src="{{ url_for('static', path=blog.user.profile_image) }}"
-                    alt="{{ blog.user.username }}"
-                    class="avatar-img">
+            <img src="{{ url_for('static', path=blog.user.profile_image) }}" alt="{{ blog.user.username }}"
+                class="avatar-img">
 
             {% else %}
 
-                <i class="bi bi-person-fill"></i>
+            <i class="bi bi-person-fill"></i>
 
             {% endif %}
 
@@ -48,23 +46,16 @@
 
         {% if blog.image %}
 
-        <img
-            src="{{ url_for('static', path=blog.image) }}"
-            class="img-fluid rounded mt-3"
-            alt="Blog Image">
+        <img src="{{ url_for('static', path=blog.image) }}" class="img-fluid rounded mt-3" alt="Blog Image">
 
         {% endif %}
 
 
         {% if blog.video %}
 
-        <video
-            class="w-100 rounded mt-3"
-            controls>
+        <video class="w-100 rounded mt-3" controls>
 
-            <source
-                src="{{ url_for('static', path=blog.video) }}"
-                type="video/mp4">
+            <source src="{{ url_for('static', path=blog.video) }}" type="video/mp4">
 
             Your browser does not support the video tag.
 
@@ -77,30 +68,36 @@
 
     <div class="post-actions">
 
-        <button>
-            <i class="bi bi-chat"></i>
-            <span>0</span>
-        </button>
+        <div class="left-actions">
 
-        <button>
-            <i class="bi bi-repeat"></i>
-            <span>0</span>
-        </button>
+            <button>
+                <i class="bi bi-chat"></i>
+                <span>0</span>
+            </button>
 
-        <button>
+            <button>
+                <i class="bi bi-repeat"></i>
+                <span>0</span>
+            </button>
+
+            <button>
+                <i class="bi bi-bar-chart"></i>
+                <span>0</span>
+            </button>
+
+            <button>
+                <i class="bi bi-share"></i>
+            </button>
+
+        </div>
+        <button type="button" class="like-btn" data-blog-id="{{ blog.id }}">
+            {% if blog.is_liked %}
+            <i class="bi bi-heart-fill text-danger"></i>
+            {% else %}
             <i class="bi bi-heart"></i>
-            <span>0</span>
-        </button>
+            {% endif %}
 
-        <button>
-            <i class="bi bi-bar-chart"></i>
-            <span>0</span>
+            <span>{{ blog.likes|length }}</span>
         </button>
-
-        <button>
-            <i class="bi bi-share"></i>
-        </button>
-
     </div>
-
 </article>

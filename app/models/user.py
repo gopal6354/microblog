@@ -26,8 +26,8 @@ class User(Base):
     role: Mapped[RoleChoice] = mapped_column(
         SQLEnum(RoleChoice), default=RoleChoice.USER
     )
-    city: Mapped[str] = mapped_column(nullable=True)
-    state: Mapped[str] = mapped_column(nullable=True)
+    city: Mapped[Optional[str]] = mapped_column(nullable=True)
+    state: Mapped[Optional[str]] = mapped_column(nullable=True)
     status: Mapped[StatusChoice] = mapped_column(
         SQLEnum(StatusChoice), default=StatusChoice.INACTIVE
     )
@@ -40,3 +40,4 @@ class User(Base):
     )
     otp_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     blogs = relationship("Blog", back_populates="user", cascade="all,delete-orphan")
+    likes = relationship("Like", back_populates="user", cascade="all,delete-orphan")

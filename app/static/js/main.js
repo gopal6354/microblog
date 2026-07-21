@@ -106,6 +106,40 @@ if (textarea) {
 
 }
 
+document.querySelectorAll(".like-btn").forEach(button => {
+
+    button.addEventListener("click", async function () {
+
+        console.log("Like button clicked");
+
+        const blogId = this.dataset.blogId;
+
+        const response = await fetch(`/blog/${blogId}/like`, {
+            method: "POST"
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            alert(data.message);
+            return;
+        }
+        const icon = this.querySelector("i");
+        const count = this.querySelector("span");
+
+        if (data.liked) {
+            icon.classList.remove("bi-heart");
+            icon.classList.add("bi-heart-fill", "text-danger");
+        } else {
+            icon.classList.remove("bi-heart-fill", "text-danger");
+            icon.classList.add("bi-heart");
+        }
+
+        count.textContent = data.like_count;
+
+    });
+
+});
 
 // ================================
 // Future JavaScript
