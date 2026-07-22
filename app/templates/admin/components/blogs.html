@@ -1,0 +1,342 @@
+{% extends "admin/admin_base.html" %}
+
+
+
+{% block title %}
+
+Blogs | EchoHub Admin
+
+{% endblock %}
+
+
+
+
+
+{% block content %}
+
+
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+
+    <div>
+
+        <h2>
+            Blogs Management
+        </h2>
+
+        <p class="text-muted">
+            Manage all EchoHub blogs
+        </p>
+
+    </div>
+
+
+
+    <div>
+
+        <input
+        type="text"
+        class="form-control"
+        placeholder="Search blogs...">
+
+    </div>
+
+
+</div>
+
+
+
+
+
+
+
+<div class="card admin-card">
+
+
+    <div class="card-body">
+
+
+        <div class="table-responsive">
+
+
+            <table class="table table-hover align-middle">
+
+
+
+                <thead>
+
+
+                    <tr>
+
+
+                        <th>
+                            ID
+                        </th>
+
+
+                        <th>
+                            Author
+                        </th>
+
+
+                        <th>
+                            Content
+                        </th>
+
+
+                        <th>
+                            Media
+                        </th>
+
+
+                        <th>
+                            Created
+                        </th>
+
+
+                        <th>
+                            Actions
+                        </th>
+
+
+                    </tr>
+
+
+                </thead>
+
+
+
+
+
+
+                <tbody>
+
+
+
+                    <tr>
+
+
+                        <td>
+                            1
+                        </td>
+
+
+
+
+                        <td>
+
+                            @gopal
+
+                        </td>
+
+
+
+
+                        <td>
+
+
+                            <div style="max-width:300px">
+
+
+                                Building a new FastAPI project with
+                                SQLAlchemy and Jinja templates...
+
+
+                            </div>
+
+
+                        </td>
+
+
+
+
+                        <td>
+
+
+                            <img
+                            src="/static/uploads/images/sample.jpg"
+                            width="70"
+                            height="50"
+                            class="rounded"
+                            alt="blog image">
+
+
+                        </td>
+
+
+
+
+
+                        <td>
+
+                            21 July 2026
+
+                        </td>
+
+
+
+
+
+                        <td>
+
+
+
+                            <button
+                            class="btn btn-sm btn-info">
+
+
+                                <i class="bi bi-eye"></i>
+
+
+                            </button>
+
+
+
+
+                            <button
+                            class="btn btn-sm btn-danger">
+
+
+                                <i class="bi bi-trash"></i>
+
+
+                            </button>
+
+
+
+                        </td>
+
+
+
+                    </tr>
+
+
+
+
+
+
+
+
+
+                    <tr>
+
+
+                        <td>
+                            2
+                        </td>
+
+
+
+
+                        <td>
+
+                            @rahul
+
+                        </td>
+
+
+
+
+                        <td>
+
+
+                            <div style="max-width:300px">
+
+
+                                Learning Python backend development...
+
+
+                            </div>
+
+
+                        </td>
+
+
+
+
+                        <td>
+
+
+                            <span class="badge bg-secondary">
+
+                                No Image
+
+                            </span>
+
+
+                        </td>
+
+
+
+
+
+                        <td>
+
+                            20 July 2026
+
+                        </td>
+
+
+
+
+
+                        <td>
+
+
+
+                            <button
+                            class="btn btn-sm btn-info">
+
+
+                                <i class="bi bi-eye"></i>
+
+
+                            </button>
+
+
+
+
+                            <button
+                            class="btn btn-sm btn-danger">
+
+
+                                <i class="bi bi-trash"></i>
+
+
+                            </button>
+
+
+
+                        </td>
+
+
+
+                    </tr>
+
+
+
+
+                </tbody>
+
+
+
+
+            </table>
+
+
+
+        </div>
+
+
+
+    </div>
+
+
+</div>
+
+
+
+
+
+{% endblock %}

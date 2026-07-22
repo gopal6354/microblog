@@ -1,0 +1,378 @@
+{% extends "admin/admin_base.html" %}
+
+
+
+{% block title %}
+
+Reports | EchoHub Admin
+
+{% endblock %}
+
+
+
+
+
+{% block content %}
+
+
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+
+    <div>
+
+        <h2>
+            Reports Management
+        </h2>
+
+        <p class="text-muted">
+            Review reported blogs and take action
+        </p>
+
+    </div>
+
+
+
+    <div>
+
+        <select class="form-select">
+
+            <option>
+                All Reports
+            </option>
+
+            <option>
+                Pending
+            </option>
+
+            <option>
+                Reviewed
+            </option>
+
+            <option>
+                Resolved
+            </option>
+
+        </select>
+
+    </div>
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="card admin-card">
+
+
+    <div class="card-body">
+
+
+
+        <div class="table-responsive">
+
+
+            <table class="table table-hover align-middle">
+
+
+
+                <thead>
+
+
+                    <tr>
+
+
+                        <th>
+                            ID
+                        </th>
+
+
+                        <th>
+                            Reported By
+                        </th>
+
+
+                        <th>
+                            Blog Owner
+                        </th>
+
+
+                        <th>
+                            Reason
+                        </th>
+
+
+                        <th>
+                            Status
+                        </th>
+
+
+                        <th>
+                            Date
+                        </th>
+
+
+                        <th>
+                            Actions
+                        </th>
+
+
+                    </tr>
+
+
+                </thead>
+
+
+
+
+
+
+                <tbody>
+
+
+
+                    <tr>
+
+
+                        <td>
+                            1
+                        </td>
+
+
+
+                        <td>
+                            @rahul
+                        </td>
+
+
+
+                        <td>
+                            @gopal
+                        </td>
+
+
+
+
+                        <td>
+
+
+                            <div style="max-width:250px">
+
+                                Inappropriate content
+
+                            </div>
+
+
+                        </td>
+
+
+
+
+                        <td>
+
+
+                            <span class="badge bg-warning">
+
+                                Pending
+
+                            </span>
+
+
+                        </td>
+
+
+
+
+                        <td>
+
+                            21 July 2026
+
+                        </td>
+
+
+
+
+                        <td>
+
+
+
+                            <button
+                            class="btn btn-sm btn-info">
+
+
+                                <i class="bi bi-eye"></i>
+
+
+                            </button>
+
+
+
+
+
+                            <button
+                            class="btn btn-sm btn-success">
+
+
+                                <i class="bi bi-check-circle"></i>
+
+
+                            </button>
+
+
+
+
+
+                            <button
+                            class="btn btn-sm btn-danger">
+
+
+                                <i class="bi bi-trash"></i>
+
+
+                            </button>
+
+
+
+
+                        </td>
+
+
+
+                    </tr>
+
+
+
+
+
+
+
+
+
+                    <tr>
+
+
+                        <td>
+                            2
+                        </td>
+
+
+
+                        <td>
+                            @amit
+                        </td>
+
+
+
+                        <td>
+                            @john
+                        </td>
+
+
+
+
+                        <td>
+
+
+                            <div style="max-width:250px">
+
+                                Spam content
+
+                            </div>
+
+
+                        </td>
+
+
+
+
+                        <td>
+
+
+                            <span class="badge bg-success">
+
+                                Resolved
+
+                            </span>
+
+
+                        </td>
+
+
+
+
+                        <td>
+
+                            20 July 2026
+
+                        </td>
+
+
+
+
+                        <td>
+
+
+
+                            <button
+                            class="btn btn-sm btn-info">
+
+
+                                <i class="bi bi-eye"></i>
+
+
+                            </button>
+
+
+
+
+
+                            <button
+                            class="btn btn-sm btn-secondary">
+
+
+                                <i class="bi bi-x-circle"></i>
+
+
+                            </button>
+
+
+
+
+
+                        </td>
+
+
+
+                    </tr>
+
+
+
+
+                </tbody>
+
+
+
+
+            </table>
+
+
+
+        </div>
+
+
+
+    </div>
+
+
+</div>
+
+
+
+
+
+{% endblock %}
