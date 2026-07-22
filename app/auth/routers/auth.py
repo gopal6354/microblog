@@ -22,6 +22,7 @@ from datetime import datetime, timedelta, UTC
 from sqlalchemy.exc import IntegrityError
 from models.user import StatusChoice
 from utils import email_service, otp_service
+from auth.services.auth_service import is_super_admin
 
 router = APIRouter()
 
@@ -156,6 +157,11 @@ def login_user(
         return RedirectResponse(
             url="/verify-otp",
             status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    if is_super_admin(exist_user):
+        return RedirectResponse(
+            url="admin-dashboard", status_code=status.HTTP_303_SEE_OTHER
         )
 
     access_token = create_access_token(data={"sub": str(exist_user.id)})
