@@ -101,22 +101,23 @@ Users | EchoHub Admin
 
                 <tbody>
 
-
+                    {% for users in all_user %}
                     <tr>
 
 
                         <td>
-                            1
+                            {{ users.id }}
                         </td>
 
 
                         <td>
-                            @gopal
+
+                            {{ users.username }}
                         </td>
 
 
                         <td>
-                            gopal@gmail.com
+                            {{ users.email }}
                         </td>
 
 
@@ -125,7 +126,7 @@ Users | EchoHub Admin
 
                             <span class="badge bg-primary">
 
-                                User
+                                {{ users.role.value }}
 
                             </span>
 
@@ -138,7 +139,7 @@ Users | EchoHub Admin
 
                             <span class="badge bg-success">
 
-                                Active
+                                {{ users.status.value }}
 
                             </span>
 
@@ -148,7 +149,7 @@ Users | EchoHub Admin
 
 
                         <td>
-                            21 July 2026
+                            {{ users.created_at.strftime("%d %B %Y") }}
                         </td>
 
 
@@ -189,97 +190,8 @@ Users | EchoHub Admin
 
 
                     </tr>
+                    {% endfor %}
 
-
-
-
-
-                    <tr>
-
-
-                        <td>
-                            2
-                        </td>
-
-
-                        <td>
-                            @rahul
-                        </td>
-
-
-                        <td>
-                            rahul@gmail.com
-                        </td>
-
-
-
-                        <td>
-
-                            <span class="badge bg-primary">
-
-                                User
-
-                            </span>
-
-                        </td>
-
-
-
-
-                        <td>
-
-                            <span class="badge bg-danger">
-
-                                Blocked
-
-                            </span>
-
-                        </td>
-
-
-
-
-                        <td>
-                            20 July 2026
-                        </td>
-
-
-
-
-                        <td>
-
-
-                            <button
-                            class="btn btn-sm btn-info">
-
-                                <i class="bi bi-eye"></i>
-
-                            </button>
-
-
-
-                            <button
-                            class="btn btn-sm btn-success">
-
-                                <i class="bi bi-unlock"></i>
-
-                            </button>
-
-
-
-                            <button
-                            class="btn btn-sm btn-danger">
-
-                                <i class="bi bi-trash"></i>
-
-                            </button>
-
-
-
-                        </td>
-
-
-                    </tr>
 
 
 

@@ -35,10 +35,7 @@ Blogs | EchoHub Admin
 
     <div>
 
-        <input
-        type="text"
-        class="form-control"
-        placeholder="Search blogs...">
+        <input type="text" class="form-control" placeholder="Search blogs...">
 
     </div>
 
@@ -109,43 +106,28 @@ Blogs | EchoHub Admin
 
 
 
-
                 <tbody>
 
-
+                    {% for blog in blogs %}
 
                     <tr>
 
-
                         <td>
-                            1
+                            {{ blog.id }}
                         </td>
 
-
-
-
                         <td>
-
-                            @gopal
-
+                            @{{ blog.user.username }}
                         </td>
 
-
-
-
                         <td>
-
 
                             <div style="max-width:300px">
 
-
-                                Building a new FastAPI project with
-                                SQLAlchemy and Jinja templates...
-
+                                {{ blog.content[:80] }}{% if blog.content|length > 80 %}...{% endif %}
 
                             </div>
 
-
                         </td>
 
 
@@ -153,183 +135,68 @@ Blogs | EchoHub Admin
 
                         <td>
 
+                            {% if blog.image %}
 
-                            <img
-                            src="/static/uploads/images/sample.jpg"
-                            width="70"
-                            height="50"
-                            class="rounded"
-                            alt="blog image">
+                            <img src="{{ url_for('static', path=blog.image) }}" class="blog-thumbnail"
+                             style="width:70px; height:50px; object-fit:cover;" alt="Blog Image">
 
+                            {% elif blog.video %}
 
-                        </td>
+                            <video class="blog-thumbnail" controls muted  style="width:70px; height:50px; object-fit:cover;">
+                                <source src="{{ url_for('static', path=blog.video) }}" type="video/mp4">
+                            </video>
 
-
-
-
-
-                        <td>
-
-                            21 July 2026
-
-                        </td>
-
-
-
-
-
-                        <td>
-
-
-
-                            <button
-                            class="btn btn-sm btn-info">
-
-
-                                <i class="bi bi-eye"></i>
-
-
-                            </button>
-
-
-
-
-                            <button
-                            class="btn btn-sm btn-danger">
-
-
-                                <i class="bi bi-trash"></i>
-
-
-                            </button>
-
-
-
-                        </td>
-
-
-
-                    </tr>
-
-
-
-
-
-
-
-
-
-                    <tr>
-
-
-                        <td>
-                            2
-                        </td>
-
-
-
-
-                        <td>
-
-                            @rahul
-
-                        </td>
-
-
-
-
-                        <td>
-
-
-                            <div style="max-width:300px">
-
-
-                                Learning Python backend development...
-
-
-                            </div>
-
-
-                        </td>
-
-
-
-
-                        <td>
-
+                            {% else %}
 
                             <span class="badge bg-secondary">
-
-                                No Image
-
+                                No Media
                             </span>
 
+                            {% endif %}
 
                         </td>
 
 
 
-
-
                         <td>
-
-                            20 July 2026
-
+                            {{ blog.created_at.strftime("%d %B %Y") }}
                         </td>
 
-
-
-
-
                         <td>
 
-
-
-                            <button
-                            class="btn btn-sm btn-info">
-
+                            <button class="btn btn-sm btn-info">
 
                                 <i class="bi bi-eye"></i>
 
-
                             </button>
 
-
-
-
-                            <button
-                            class="btn btn-sm btn-danger">
-
+                            <button class="btn btn-sm btn-danger">
 
                                 <i class="bi bi-trash"></i>
 
-
                             </button>
-
-
 
                         </td>
 
+                    </tr>
 
+                    {% else %}
+
+                    <tr>
+
+                        <td colspan="6" class="text-center text-muted py-4">
+
+                            No blogs found.
+
+                        </td>
 
                     </tr>
 
-
-
+                    {% endfor %}
 
                 </tbody>
-
-
-
-
             </table>
-
-
-
         </div>
-
-
-
     </div>
 
 

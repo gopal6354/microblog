@@ -7,7 +7,7 @@ from fastapi import (
     HTTPException,
     BackgroundTasks,
 )
-from core.config import templates, create_access_token, create_refresh_token
+from core.config import templates, create_access_token
 from sqlalchemy.orm import Session
 from sqlalchemy import select, or_
 from database import get_db
@@ -159,15 +159,17 @@ def login_user(
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
-    if is_super_admin(exist_user):
-        return RedirectResponse(
-            url="admin-dashboard", status_code=status.HTTP_303_SEE_OTHER
-        )
-
     access_token = create_access_token(data={"sub": str(exist_user.id)})
 
-    create_refresh_token(data={"sub": str(exist_user.id)})
-    response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    # currently not using
+    # create_refresh_token(data={"sub": str(exist_user.id)})
+
+    if is_super_admin(exist_user):
+        response = RedirectResponse(
+            url="/admin-dashboard", status_code=status.HTTP_303_SEE_OTHER
+        )
+    else:
+        response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
 
     response.set_cookie(
         key="access_token",

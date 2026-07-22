@@ -42,3 +42,6 @@ class User(Base):
     otp_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     blogs = relationship("Blog", back_populates="user", cascade="all,delete-orphan")
     likes = relationship("Like", back_populates="user", cascade="all,delete-orphan")
+    reports = relationship(
+        "Report", back_populates="reporter", cascade="all,delete-orphan"
+    )

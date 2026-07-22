@@ -3,7 +3,7 @@ from jose import JWTError
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from database import get_db
-from models.user import User
+from models.user import User, RoleChoice
 from core.config import decode_token
 
 
@@ -40,3 +40,12 @@ def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired or invalid."
         )
+
+
+def require_super_admin(current_user: User = Depends(get_current_user)):
+    if current_user is None:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    if current_user.role != RoleChoice.SUPER_ADMIN:
+        raise HTTPException(status_code=403, detail="Only Super admin can access.")
+    return current_user
