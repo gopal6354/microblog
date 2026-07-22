@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from routers.echohub import auth, blog, echohub, user
-from routers.admin_panel import admin
+from auth.routers import auth
+from echohub.routers import blog
+from user.routers import user
+from echohub.routers import echohub
+from admin_panel.routes import admin
 from starlette.middleware.sessions import SessionMiddleware
 from core.config import settings
 from core.middleware import auth_middleware
