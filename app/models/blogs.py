@@ -21,6 +21,10 @@ class Blog(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
+    is_hidden: Mapped[bool] = mapped_column(
+        default=False,
+        nullable=False,
+    )
     user = relationship("User", back_populates="blogs")
     likes = relationship("Like", back_populates="blog", cascade="all,delete-orphan")
     reports = relationship("Report", back_populates="blog", cascade="all,delete-orphan")

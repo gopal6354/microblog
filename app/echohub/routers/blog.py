@@ -15,9 +15,11 @@ router = APIRouter()
 @router.get("/create-blog")
 def create_blog_page(
     request: Request,
-    current_user: User = Depends(get_current_user),
+    current_user: User | None = Depends(get_current_user),
     session: Session = Depends(get_db),
 ):
+    if not current_user:
+        return RedirectResponse(url="/", status_code=303)
     return templates.TemplateResponse(
         request=request,
         name="/blog/blog.html",

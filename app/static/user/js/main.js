@@ -141,6 +141,17 @@ document.querySelectorAll(".like-btn").forEach(button => {
 
 });
 
+document.querySelectorAll(".report-btn").forEach(button => {
+
+    button.addEventListener("click", function () {
+
+        const blogId = this.dataset.blogId;
+
+        document.getElementById("reportBlogId").value = blogId;
+
+    });
+
+});
 // ================================
 // Future JavaScript
 // ================================

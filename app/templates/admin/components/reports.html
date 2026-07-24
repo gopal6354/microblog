@@ -1,378 +1,149 @@
 {% extends "admin/admin_base.html" %}
 
-
-
 {% block title %}
-
 Reports | EchoHub Admin
-
 {% endblock %}
-
-
-
-
 
 {% block content %}
 
-
-
 <div class="d-flex justify-content-between align-items-center mb-4">
 
-
     <div>
-
-        <h2>
-            Reports Management
-        </h2>
-
+        <h2>Reports Management</h2>
         <p class="text-muted">
-            Review reported blogs and take action
+            Review reported blogs from users
         </p>
-
     </div>
-
-
 
     <div>
-
-        <select class="form-select">
-
-            <option>
-                All Reports
-            </option>
-
-            <option>
-                Pending
-            </option>
-
-            <option>
-                Reviewed
-            </option>
-
-            <option>
-                Resolved
-            </option>
-
-        </select>
-
+        <input type="text" class="form-control" placeholder="Search reports...">
     </div>
-
 
 </div>
-
-
-
-
-
-
 
 
 <div class="card admin-card">
 
-
     <div class="card-body">
-
-
 
         <div class="table-responsive">
 
-
             <table class="table table-hover align-middle">
-
-
 
                 <thead>
 
-
                     <tr>
 
+                        <th>ID</th>
 
-                        <th>
-                            ID
-                        </th>
+                        <th>Author</th>
 
+                        <th>Blog</th>
 
-                        <th>
-                            Reported By
-                        </th>
+                        <th>Reports</th>
 
+                        <th>Latest Report</th>
 
-                        <th>
-                            Blog Owner
-                        </th>
+                        <th>Status</th>
 
-
-                        <th>
-                            Reason
-                        </th>
-
-
-                        <th>
-                            Status
-                        </th>
-
-
-                        <th>
-                            Date
-                        </th>
-
-
-                        <th>
-                            Actions
-                        </th>
-
+                        <th>Actions</th>
 
                     </tr>
-
 
                 </thead>
 
-
-
-
-
-
                 <tbody>
 
-
+                    {% for blog in reported_blogs %}
 
                     <tr>
 
-
                         <td>
-                            1
+                            #{{ blog.id }}
                         </td>
 
-
-
                         <td>
-                            @rahul
+                            @{{ blog.user.username }}
                         </td>
 
-
-
-                        <td>
-                            @gopal
-                        </td>
-
-
-
-
                         <td>
 
+                            <div style="max-width:320px;">
 
-                            <div style="max-width:250px">
-
-                                Inappropriate content
+                                {{ blog.content[:70] }}
+                                {% if blog.content|length > 70 %}
+                                ...
+                                {% endif %}
 
                             </div>
 
-
                         </td>
-
-
-
 
                         <td>
 
+                            <span class="badge bg-danger">
 
-                            <span class="badge bg-warning">
-
-                                Pending
+                                {{ blog.reports|length }}
 
                             </span>
 
-
                         </td>
-
-
-
 
                         <td>
 
-                            21 July 2026
+                            {{ blog.reports[-1].created_at.strftime("%d %b %Y") }}
 
                         </td>
 
+                        <td>
+                            <span class="badge
+                                {% if blog.reports[0].status.name == 'PENDING' %}
+                                    bg-warning text-dark
+                                {% elif blog.reports[0].status.name == 'DISMISSED' %}
+                                    bg-secondary
+                                {% elif blog.reports[0].status.name == 'RESOLVED' %}
+                                    bg-success
+                                {% endif %}">
+                                {{ blog.reports[0].status.value }}
+                            </span>
 
-
+                        </td>
 
                         <td>
 
-
-
-                            <button
-                            class="btn btn-sm btn-info">
-
+                            <a href="/admin/reports/{{ blog.id }}" class="btn btn-sm btn-primary">
 
                                 <i class="bi bi-eye"></i>
+                                Review
 
-
-                            </button>
-
-
-
-
-
-                            <button
-                            class="btn btn-sm btn-success">
-
-
-                                <i class="bi bi-check-circle"></i>
-
-
-                            </button>
-
-
-
-
-
-                            <button
-                            class="btn btn-sm btn-danger">
-
-
-                                <i class="bi bi-trash"></i>
-
-
-                            </button>
-
-
-
+                            </a>
 
                         </td>
-
-
 
                     </tr>
 
-
-
-
-
-
-
-
+                    {% else %}
 
                     <tr>
 
+                        <td colspan="7" class="text-center text-muted py-4">
 
-                        <td>
-                            2
-                        </td>
-
-
-
-                        <td>
-                            @amit
-                        </td>
-
-
-
-                        <td>
-                            @john
-                        </td>
-
-
-
-
-                        <td>
-
-
-                            <div style="max-width:250px">
-
-                                Spam content
-
-                            </div>
-
+                            No reported blogs found.
 
                         </td>
-
-
-
-
-                        <td>
-
-
-                            <span class="badge bg-success">
-
-                                Resolved
-
-                            </span>
-
-
-                        </td>
-
-
-
-
-                        <td>
-
-                            20 July 2026
-
-                        </td>
-
-
-
-
-                        <td>
-
-
-
-                            <button
-                            class="btn btn-sm btn-info">
-
-
-                                <i class="bi bi-eye"></i>
-
-
-                            </button>
-
-
-
-
-
-                            <button
-                            class="btn btn-sm btn-secondary">
-
-
-                                <i class="bi bi-x-circle"></i>
-
-
-                            </button>
-
-
-
-
-
-                        </td>
-
-
 
                     </tr>
 
-
-
+                    {% endfor %}
 
                 </tbody>
 
-
-
-
             </table>
-
-
 
         </div>
 
-
-
     </div>
 
-
 </div>
-
-
-
-
 
 {% endblock %}

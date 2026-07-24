@@ -69,6 +69,16 @@
     <div class="post-actions">
 
         <div class="left-actions">
+            <button type="button" class="like-btn" data-blog-id="{{ blog.id }}">
+                {% if blog.is_liked %}
+                <i class="bi bi-heart-fill text-danger"></i>
+                {% else %}
+                <i class="bi bi-heart"></i>
+                {% endif %}
+
+                <span>{{ blog.likes|length }}</span>
+            </button>
+
 
             <button>
                 <i class="bi bi-chat"></i>
@@ -90,14 +100,14 @@
             </button>
 
         </div>
-        <button type="button" class="like-btn" data-blog-id="{{ blog.id }}">
-            {% if blog.is_liked %}
-            <i class="bi bi-heart-fill text-danger"></i>
-            {% else %}
-            <i class="bi bi-heart"></i>
-            {% endif %}
 
-            <span>{{ blog.likes|length }}</span>
+        {% if current_user.id != blog.user_id %}
+        <button type="button" class="report-btn" data-blog-id="{{ blog.id }}" data-bs-toggle="modal"
+            data-bs-target="#reportModal">
+
+            <i class="bi bi-flag-fill "></i>
+
         </button>
+        {% endif %}
     </div>
 </article>

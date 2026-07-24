@@ -22,7 +22,7 @@ from datetime import datetime, timedelta, UTC
 from sqlalchemy.exc import IntegrityError
 from models.user import StatusChoice
 from utils import email_service, otp_service
-from auth.services.auth_service import is_super_admin
+from auth.services.auth_service import is_super_admin, is_user_soft_deleted
 
 router = APIRouter()
 
@@ -123,6 +123,17 @@ def login_user(
             context={"error": "User not existed. "},
         )
 
+    # check use delete
+    if is_user_soft_deleted(exist_user):
+        print("use soft deleted")
+        return templates.TemplateResponse(
+            request=request,
+            name="/auth/login.html",
+            context={
+                "error": "Your account has been deleted. Please contact to admin."
+            },
+        )
+
     if not verify_password(user.password, exist_user.hashed_password):
         return templates.TemplateResponse(
             request=request,
@@ -177,7 +188,7 @@ def login_user(
         httponly=True,
         samesite="lax",
         secure=False,
-        max_age=60 * 60,
+        max_age=60 * 60 * 24,
     )
 
     return response
@@ -259,7 +270,7 @@ def forget_password(
     if not user:
         return templates.TemplateResponse(
             request=request,
-            name="/auth/forgot_password.html",
+            name="/auth/forget_password.html",
             context={"error": "User with this email does not exist."},
         )
 
@@ -475,7 +486,7 @@ def logout(request: Request):
     request.session.pop("otp_email", None)
     request.session.pop("otp_flow", None)
     request.session.pop("reset_verified", None)
-    response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    response = RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
 
     response.delete_cookie("access_token")
     return response

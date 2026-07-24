@@ -21,9 +21,16 @@ class ReportReason(str, Enum):
 
 class ReportStatus(str, Enum):
     PENDING = "Pending"
-    REVIEWED = "Reviewed"
     RESOLVED = "Resolved"
     DISMISSED = "Dismissed"
+
+
+class ModerationAction(str, Enum):
+    NONE = "None"
+    BLOG_SOFT_DELETED = "Blog Soft Deleted"
+    BLOG_HARD_DELETED = "Blog Hard Deleted"
+    AUTHOR_SUSPENDED = "Author Suspended"
+    AUTHOR_DELETED = "Author Deleted"
 
 
 class Report(Base):
@@ -63,6 +70,12 @@ class Report(Base):
     status: Mapped[ReportStatus] = mapped_column(
         SQLEnum(ReportStatus),
         default=ReportStatus.PENDING,
+        nullable=False,
+    )
+
+    action: Mapped[ModerationAction] = mapped_column(
+        SQLEnum(ModerationAction),
+        default=ModerationAction.NONE,
         nullable=False,
     )
 

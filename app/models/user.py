@@ -40,6 +40,7 @@ class User(Base):
         DateTime(timezone=True), nullable=True
     )
     otp_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     blogs = relationship("Blog", back_populates="user", cascade="all,delete-orphan")
     likes = relationship("Like", back_populates="user", cascade="all,delete-orphan")
     reports = relationship(

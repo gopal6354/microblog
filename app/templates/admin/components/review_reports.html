@@ -1,0 +1,317 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}
+Review Report | EchoHub Admin
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+
+        <h2>Review Report</h2>
+
+        <p class="text-muted">
+            Review reported blog and take moderation action.
+        </p>
+
+    </div>
+
+    <a href="/admin/reports" class="btn btn-outline-secondary">
+
+        <i class="bi bi-arrow-left"></i>
+        Back
+
+    </a>
+
+</div>
+
+
+<div class="row">
+
+    <!-- Blog Details -->
+
+    <div class="col-lg-8">
+
+        <div class="card admin-card mb-4">
+
+            <div class="card-header">
+
+                <h5 class="mb-0">
+                    Reported Blog
+                </h5>
+
+            </div>
+
+            <div class="card-body">
+
+                <div class="d-flex align-items-center mb-3">
+
+                    <div class="me-3">
+
+                        <img src="https://placehold.co/60x60" class="rounded-circle" width="60">
+
+                    </div>
+
+                    <div>
+
+                        <h6 class="mb-1">
+
+                            {{ blog.user.full_name }}
+
+                        </h6>
+
+                        <small class="text-muted">
+
+                            {{ blog.user.username }}
+
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <p>
+
+                    {{ blog.content }}
+
+                </p>
+
+                {% if blog.image %}
+
+                <img src="{{ url_for('static', path=blog.image) }}" class="img-fluid rounded mx-auto d-block"
+                    alt="Blog Image" style="max-height: 450px;">
+
+                {% elif blog.video %}
+
+                <video class="img-fluid rounded w-100" controls style="max-height: 450px;">
+
+                    <source src="{{ url_for('static', path=blog.video) }}" type="video/mp4">
+
+                    Your browser does not support the video tag.
+
+                </video>
+
+                {% endif %}
+            </div>
+
+        </div>
+
+
+        <!-- Reports -->
+
+        <div class="card admin-card">
+
+            <div class="card-header">
+
+                <h5 class="mb-0">
+
+                    Reports
+
+                    <span class="badge bg-danger ms-2">
+
+                        5
+
+                    </span>
+
+                </h5>
+
+            </div>
+
+            <div class="card-body">
+
+                <div class="table-responsive">
+
+                    <table class="table table-hover align-middle">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Reporter</th>
+
+                                <th>Reason</th>
+
+                                <th>Description</th>
+
+                                <th>Date</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+                            {% for report in blog.reports %}
+                            <tr>
+
+                                <td>{{ report.reporter.username }}</td>
+
+                                <td>
+
+                                    <span class="badge bg-danger">
+
+                                        {{ report.reason }}
+
+                                    </span>
+
+                                </td>
+
+                                <td>
+
+                                    {{ report.description }}
+
+                                </td>
+
+                                <td>
+
+                                    {{ report.created_at.strftime("%d %b %Y") }}
+
+                                </td>
+
+                            </tr>
+
+                            <tr>
+                                {% endfor %}
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+
+        <div class="card admin-card">
+
+            <div class="card-header">
+
+                <h5 class="mb-0">
+                    Moderation
+                </h5>
+
+            </div>
+
+            <div class="card-body">
+
+                <!-- Current Action -->
+
+                <div class="mb-3">
+
+                    <strong>Current Action</strong>
+
+                    <br>
+
+                    <span class="badge bg-info">
+
+                        {{ latest_report.action.value }}
+
+                    </span>
+
+                </div>
+
+                <!-- Total Reports -->
+
+                <div class="mb-4">
+
+                    <strong>Total Reports</strong>
+
+                    <br>
+
+                    <span class="fs-4 fw-bold text-danger">
+
+                        {{ blog.reports|length }}
+
+                    </span>
+
+                </div>
+
+                <form action="/admin/reports/{{ blog.id }}/moderate" method="post">
+
+                    <!-- Status -->
+
+                    <div class="mb-4">
+
+                        <label class="form-label fw-semibold">
+
+                            Report Status
+
+                        </label>
+
+                        <select name="status" class="form-select">
+
+                            <option value="Resolved" {% if latest_report.status.value=="Resolved" %}selected{% endif %}>
+                                Resolved
+                            </option>
+
+                            <option value="Dismissed" {% if latest_report.status.value=="Dismissed" %}selected{% endif
+                                %}>
+                                Dismissed
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="d-grid gap-2">
+
+                        <button type="submit" name="action" value="None" class="btn btn-success">
+
+                            <i class="bi bi-check-circle"></i>
+
+                            Dismiss Reports
+
+                        </button>
+
+                        <button type="submit" name="action" value="Blog Soft Deleted" class="btn btn-warning">
+
+                            <i class="bi bi-eye-slash"></i>
+
+                            Hide Blog
+
+                        </button>
+
+                        <button type="submit" name="action" value="Blog Hard Deleted" class="btn btn-danger">
+
+                            <i class="bi bi-trash"></i>
+
+                            Delete Blog
+
+                        </button>
+
+                        <button type="submit" name="action" value="Author Suspended" class="btn btn-dark">
+
+                            <i class="bi bi-person-lock"></i>
+
+                            Suspend Author
+
+                        </button>
+
+                        <button type="submit" name="action" value="Author Deleted" class="btn btn-outline-danger">
+
+                            <i class="bi bi-person-x"></i>
+
+                            Delete Author
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

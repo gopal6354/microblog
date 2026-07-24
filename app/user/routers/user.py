@@ -84,7 +84,7 @@ def user_blogs(
 
     blogs = session.scalars(
         select(Blog)
-        .where(Blog.user_id == current_user.id)
+        .where(Blog.user_id == current_user.id, Blog.is_hidden.is_(False))
         .order_by(Blog.created_at.desc())
     ).all()
     post_count = len(blogs)
