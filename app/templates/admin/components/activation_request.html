@@ -132,7 +132,7 @@ Activation Requests | EchoHub Admin
                 <tbody>
 
 
-
+                    {% for activation in activation_requests %}
                     <tr>
 
 
@@ -143,13 +143,13 @@ Activation Requests | EchoHub Admin
 
 
                         <td>
-                            @rahul
+                            {{ activation.user.username }}
                         </td>
 
 
 
                         <td>
-                            rahul@gmail.com
+                            {{ activation.user.email }}
                         </td>
 
 
@@ -158,9 +158,7 @@ Activation Requests | EchoHub Admin
 
                             <div style="max-width:300px">
 
-                                Please activate my account.
-                                I want to continue using EchoHub.
-
+                                {{ activation.message }}
                             </div>
 
                         </td>
@@ -172,7 +170,7 @@ Activation Requests | EchoHub Admin
 
                             <span class="badge bg-warning">
 
-                                Pending
+                                {{ activation.status.value }}
 
                             </span>
 
@@ -183,119 +181,48 @@ Activation Requests | EchoHub Admin
 
                         <td>
 
-                            21 July 2026
+                            {{ activation.created_at.strftime("%d %b %Y") }}
 
                         </td>
 
 
 
                         <td>
+                            {% if activation.status == ActivationRequestStatus.PENDING %}
 
+                            <form action="/admin/account-activation/{{ activation.id }}/update" method="POST">
 
-                            <button
-                            class="btn btn-sm btn-success">
+                                <select name="status" class="form-select form-select-sm mb-2">
 
+                                    <option value="approved">
+                                        Approved
+                                    </option>
 
-                                <i class="bi bi-check-circle"></i>
+                                    <option value="rejected">
+                                        Rejected
+                                    </option>
 
+                                </select>
 
-                            </button>
+                                <button type="submit" class="btn btn-sm btn-primary">
+                                    Update
+                                </button>
 
+                            </form>
 
+                            {% else %}
 
-
-                            <button
-                            class="btn btn-sm btn-danger">
-
-
-                                <i class="bi bi-x-circle"></i>
-
-
-                            </button>
-
-
-
-                        </td>
-
-
-                    </tr>
-
-
-
-
-
-
-
-
-
-                    <tr>
-
-
-                        <td>
-                            2
-                        </td>
-
-
-
-                        <td>
-                            @amit
-                        </td>
-
-
-
-                        <td>
-                            amit@gmail.com
-                        </td>
-
-
-
-                        <td>
-
-                            Account recovery request
-
-                        </td>
-
-
-
-                        <td>
-
-
-                            <span class="badge bg-success">
-
-                                Approved
-
+                            <span class="badge bg-secondary">
+                                Already Processed
                             </span>
 
+                            {% endif %}
 
                         </td>
-
-
-
-                        <td>
-
-                            20 July 2026
-
-                        </td>
-
-
-
-                        <td>
-
-
-                            <button
-                            class="btn btn-sm btn-secondary">
-
-
-                                <i class="bi bi-eye"></i>
-
-
-                            </button>
-
-
-                        </td>
-
 
                     </tr>
+
+                    {% endfor %}
 
 
 
@@ -313,7 +240,6 @@ Activation Requests | EchoHub Admin
 
 
 </div>
-
 
 
 

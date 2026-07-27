@@ -19,10 +19,16 @@ from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from utils.otp import generate_otp
 from datetime import datetime, timedelta, UTC
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from models.user import StatusChoice
 from utils import email_service, otp_service
-from auth.services.auth_service import is_super_admin, is_user_soft_deleted
+from auth.services.auth_service import (
+    is_super_admin,
+    is_user_soft_deleted,
+    is_user_exist,
+)
+from utils.flash import flash
+from models.activation_request import AccountActivation, ActivationRequestStatus
 
 router = APIRouter()
 
@@ -30,7 +36,11 @@ router = APIRouter()
 # register page
 @router.get("/register")
 def regiter_page(request: Request):
-    return templates.TemplateResponse(request=request, name="/auth/register.html")
+    return templates.TemplateResponse(
+        request=request,
+        name="/auth/register.html",
+        context={"flash": request.session.pop("_flash", None)},
+    )
 
 
 # register page
@@ -41,24 +51,15 @@ def regiter_user(
     user: UserRegister = Depends(register_form),
     session: Session = Depends(get_db),
 ):
-    exist_user = session.scalar(
-        select(User).where(
-            or_(User.email == user.email, User.username == user.username)
-        )
-    )
+    exist_user = is_user_exist(user, session)
+
     if exist_user:
-        return templates.TemplateResponse(
-            request=request,
-            name="/auth/register.html",
-            context={"error": " User already registered."},
-        )
+        flash(request, "User already registered.", "warning")
+        return RedirectResponse(url="/register", status_code=303)
 
     if user.hashed_password != user.confirm_password:
-        return templates.TemplateResponse(
-            request=request,
-            name="/auth/register.html",
-            context={"error": "incorrect password."},
-        )
+        flash(request, "Password doest not match..", "danger")
+        return RedirectResponse(url="/register", status_code=303)
 
     hashe_password = hash_password(user.hashed_password)
     new_user = User(
@@ -73,11 +74,8 @@ def regiter_user(
     except IntegrityError:
         session.rollback()
 
-        return templates.TemplateResponse(
-            request=request,
-            name="auth/register.html",
-            context={"error": "Email or uername already exists."},
-        )
+        flash(request, "Email or username already existed.", "danger")
+        return RedirectResponse(url="/register", status_code=303)
 
     except Exception:
         session.rollback()
@@ -93,13 +91,24 @@ def regiter_user(
     request.session["otp_email"] = new_user.email
     request.session["otp_flow"] = "verification"
 
+    flash(request, "User registration successfully.", "success")
+
     return RedirectResponse(url="/verify-otp", status_code=status.HTTP_303_SEE_OTHER)
 
 
 # login page
 @router.get("/login")
 def login_page(request: Request):
-    return templates.TemplateResponse(request=request, name="/auth/login.html")
+    return templates.TemplateResponse(
+        request=request,
+        name="/auth/login.html",
+        context={
+            "flash": request.session.pop("_flash", None),
+            "show_activation_request": request.session.pop(
+                "show_activation_request", None
+            ),
+        },
+    )
 
 
 # login page
@@ -115,31 +124,30 @@ def login_user(
             or_(User.email == user.username, User.username == user.username)
         )
     )
-
     if not exist_user:
-        return templates.TemplateResponse(
-            request=request,
-            name="/auth/login.html",
-            context={"error": "User not existed. "},
-        )
+        flash(request, "User not found", "danger")
+        return RedirectResponse(url="/login", status_code=303)
 
-    # check use delete
+    # check user delete
     if is_user_soft_deleted(exist_user):
         print("use soft deleted")
-        return templates.TemplateResponse(
-            request=request,
-            name="/auth/login.html",
-            context={
-                "error": "Your account has been deleted. Please contact to admin."
-            },
+
+        flash(
+            request,
+            "Your account has been blocked. Please contact the admin..",
+            "warning",
+        )
+        request.session["show_activation_request"] = True
+        request.session["activation_user_id"] = exist_user.id
+
+        return RedirectResponse(
+            url="/login",
+            status_code=303,
         )
 
     if not verify_password(user.password, exist_user.hashed_password):
-        return templates.TemplateResponse(
-            request=request,
-            name="/auth/login.html",
-            context={"error": "Incorrect password."},
-        )
+        flash(request, "Incorrect Password", "danger")
+        return RedirectResponse(url="/login", status_code=303)
 
     if not exist_user.otp_verified:
         if (
@@ -176,10 +184,12 @@ def login_user(
     # create_refresh_token(data={"sub": str(exist_user.id)})
 
     if is_super_admin(exist_user):
+        flash(request, "Admin login successfully.", "success")
         response = RedirectResponse(
             url="/admin-dashboard", status_code=status.HTTP_303_SEE_OTHER
         )
     else:
+        flash(request, "User login successfully.", "success")
         response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
 
     response.set_cookie(
@@ -202,7 +212,11 @@ def verify_otp_page(request: Request):
     ):
         return RedirectResponse(url="/register", status_code=status.HTTP_303_SEE_OTHER)
 
-    return templates.TemplateResponse(request=request, name="/auth/verify_otp.html")
+    return templates.TemplateResponse(
+        request=request,
+        name="/auth/verify_otp.html",
+        context={"flash": request.session.pop("_flash", None)},
+    )
 
 
 # otp verify page
@@ -217,26 +231,22 @@ def verify_otp(
     db_user = session.scalar(select(User).where(User.email == email))
 
     if not db_user:
+        flash(request, "User not existed", "danger")
         return RedirectResponse(url="/register", status_code=status.HTTP_303_SEE_OTHER)
 
     if db_user.otp_verified:
+        flash(request, "Otp expired.", "danger")
         return RedirectResponse(
             request=request, url="/login", status_code=status.HTTP_303_SEE_OTHER
         )
+
     if db_user.otp != otp:
-        print("otp not valid")
-        return templates.TemplateResponse(
-            request=request,
-            name="/auth/verify_otp.html",
-            context={"error": "Invalid Otp"},
-        )
+        flash(request, "Invalid otp", "danger")
+        return RedirectResponse(url="/register", status_code=303)
 
     if db_user.otp_expiry is None or datetime.now(UTC) > db_user.otp_expiry:
-        return templates.TemplateResponse(
-            request=request,
-            name="/auth/verify_otp.html",
-            context={"error": "OTP has been expired."},
-        )
+        flash(request, "Otp has been expired.", "danger")
+        return RedirectResponse(url="/register", status_code=303)
 
     db_user.otp_verified = True
     db_user.status = StatusChoice.ACTIVE
@@ -248,13 +258,17 @@ def verify_otp(
     request.session.pop("otp_email", None)
     request.session.pop("otp_flow", None)
 
+    flash(request, "Otp verify successfully.", "success")
+
     return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
 
 
 @router.get("/forget-password")
 def forget_password_page(request: Request):
     return templates.TemplateResponse(
-        request=request, name="/auth/forget_password.html"
+        request=request,
+        name="/auth/forget_password.html",
+        context={"flash": request.session.pop("_flash", None)},
     )
 
 
@@ -268,10 +282,9 @@ def forget_password(
     user = session.scalar(select(User).where(User.email == email))
 
     if not user:
-        return templates.TemplateResponse(
-            request=request,
-            name="/auth/forget_password.html",
-            context={"error": "User with this email does not exist."},
+        flash(request, "User with this email doest not exist.", "danger")
+        return RedirectResponse(
+            url="/forget-password", status_code=status.HTTP_303_SEE_OTHER
         )
 
     request.session["otp_email"] = user.email
@@ -283,6 +296,8 @@ def forget_password(
         background_tasks=background_tasks,
         email_sender=email_service.send_reset_password_otp_email,
     )
+
+    flash(request, "Otp send successfully.", "success")
     return RedirectResponse(
         url="/verify-reset-otp",
         status_code=status.HTTP_303_SEE_OTHER,
@@ -302,6 +317,7 @@ def verify_reset_otp_page(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="auth/verify_reset_otp.html",
+        context={"flash": request.session.pop("_flash", None)},
     )
 
 
@@ -490,3 +506,55 @@ def logout(request: Request):
 
     response.delete_cookie("access_token")
     return response
+
+
+@router.get("/account-activation-request")
+def account_activation_page(request: Request):
+    return templates.TemplateResponse(
+        request=request, name="/auth/account_activation.html"
+    )
+
+
+@router.post("/account-activation-request")
+def account_activation(
+    request: Request, message: str = Form(...), session: Session = Depends(get_db)
+):
+    activation_user_id = request.session.get("activation_user_id")
+    print(activation_user_id)
+    if not activation_user_id:
+        flash(request, "Try again", "danger")
+        return RedirectResponse(url="/login", status_code=303)
+    user = session.get(User, activation_user_id)
+
+    if not user:
+        flash(request, "User not found", "danger")
+        return RedirectResponse(url="/login", status_code=303)
+
+    pending_request = session.scalar(
+        select(AccountActivation).where(
+            AccountActivation.user_id == user.id,
+            AccountActivation.status == ActivationRequestStatus.PENDING,
+        )
+    )
+
+    if pending_request:
+        flash(request, "You already have a pending activation request.", "warning")
+        return RedirectResponse(url="/login", status_code=303)
+
+    activation = AccountActivation(user_id=user.id, email=user.email, message=message)
+    try:
+        session.add(activation)
+        session.commit()
+
+    except SQLAlchemyError:
+        session.rollback()
+        flash(request, "Something went wrong. Please try again", "danger")
+        return RedirectResponse(url="/login", status_code=303)
+
+    request.session.pop("activation_user_id", None)
+    request.session.pop("show_activation_button", None)
+
+    flash(
+        request, "Your activation request has been submitted successfully.", "success"
+    )
+    return RedirectResponse(url="/login", status_code=303)

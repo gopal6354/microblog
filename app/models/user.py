@@ -46,3 +46,7 @@ class User(Base):
     reports = relationship(
         "Report", back_populates="reporter", cascade="all,delete-orphan"
     )
+
+    activation_requests = relationship(
+        "AccountActivation", back_populates="user", cascade="all,delete-orphan"
+    )

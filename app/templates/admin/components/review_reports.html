@@ -13,7 +13,7 @@ Review Report | EchoHub Admin
         <h2>Review Report</h2>
 
         <p class="text-muted">
-            Review reported blog and take moderation action.
+            Review the reported blog and update the report status.
         </p>
 
     </div>
@@ -26,7 +26,6 @@ Review Report | EchoHub Admin
     </a>
 
 </div>
-
 
 <div class="row">
 
@@ -50,55 +49,52 @@ Review Report | EchoHub Admin
 
                     <div class="me-3">
 
-                        <img src="https://placehold.co/60x60" class="rounded-circle" width="60">
+                        <img src="https://placehold.co/60x60"
+                             class="rounded-circle"
+                             width="60">
 
                     </div>
 
                     <div>
 
                         <h6 class="mb-1">
-
                             {{ blog.user.full_name }}
-
                         </h6>
 
                         <small class="text-muted">
-
-                            {{ blog.user.username }}
-
+                            @{{ blog.user.username }}
                         </small>
 
                     </div>
 
                 </div>
 
-
                 <p>
-
                     {{ blog.content }}
-
                 </p>
 
                 {% if blog.image %}
 
-                <img src="{{ url_for('static', path=blog.image) }}" class="img-fluid rounded mx-auto d-block"
-                    alt="Blog Image" style="max-height: 450px;">
+                <img src="{{ url_for('static', path=blog.image) }}"
+                     class="img-fluid rounded mx-auto d-block"
+                     style="max-height:450px;">
 
                 {% elif blog.video %}
 
-                <video class="img-fluid rounded w-100" controls style="max-height: 450px;">
+                <video class="img-fluid rounded w-100"
+                       controls
+                       style="max-height:450px;">
 
-                    <source src="{{ url_for('static', path=blog.video) }}" type="video/mp4">
-
-                    Your browser does not support the video tag.
+                    <source src="{{ url_for('static', path=blog.video) }}"
+                            type="video/mp4">
 
                 </video>
 
                 {% endif %}
+
             </div>
 
         </div>
-
 
         <!-- Reports -->
 
@@ -112,7 +108,7 @@ Review Report | EchoHub Admin
 
                     <span class="badge bg-danger ms-2">
 
-                        5
+                        {{ blog.reports|length }}
 
                     </span>
 
@@ -143,16 +139,22 @@ Review Report | EchoHub Admin
                         </thead>
 
                         <tbody>
+
                             {% for report in blog.reports %}
+
                             <tr>
 
-                                <td>{{ report.reporter.username }}</td>
+                                <td>
+
+                                    {{ report.reporter.username }}
+
+                                </td>
 
                                 <td>
 
                                     <span class="badge bg-danger">
 
-                                        {{ report.reason }}
+                                        {{ report.reason.value }}
 
                                     </span>
 
@@ -160,7 +162,7 @@ Review Report | EchoHub Admin
 
                                 <td>
 
-                                    {{ report.description }}
+                                    {{ report.description or "-" }}
 
                                 </td>
 
@@ -172,8 +174,8 @@ Review Report | EchoHub Admin
 
                             </tr>
 
-                            <tr>
-                                {% endfor %}
+                            {% endfor %}
+
                         </tbody>
 
                     </table>
@@ -186,7 +188,8 @@ Review Report | EchoHub Admin
 
     </div>
 
-    <!-- Sidebar -->
+    <!-- Status Card -->
+
     <div class="col-lg-4">
 
         <div class="card admin-card">
@@ -194,30 +197,46 @@ Review Report | EchoHub Admin
             <div class="card-header">
 
                 <h5 class="mb-0">
-                    Moderation
+                    Report Status
                 </h5>
 
             </div>
 
             <div class="card-body">
 
-                <!-- Current Action -->
+                <div class="mb-4">
 
-                <div class="mb-3">
-
-                    <strong>Current Action</strong>
+                    <strong>Current Status</strong>
 
                     <br>
 
-                    <span class="badge bg-info">
+                    {% if latest_report.status.value == "Pending" %}
 
-                        {{ latest_report.action.value }}
+                    <span class="badge bg-warning">
+
+                        {{ latest_report.status.value }}
 
                     </span>
 
-                </div>
+                    {% elif latest_report.status.value == "Resolved" %}
 
-                <!-- Total Reports -->
+                    <span class="badge bg-success">
+
+                        {{ latest_report.status.value }}
+
+                    </span>
+
+                    {% else %}
+
+                    <span class="badge bg-secondary">
+
+                        {{ latest_report.status.value }}
+
+                    </span>
+
+                    {% endif %}
+
+                </div>
 
                 <div class="mb-4">
 
@@ -225,7 +244,7 @@ Review Report | EchoHub Admin
 
                     <br>
 
-                    <span class="fs-4 fw-bold text-danger">
+                    <span class="fs-3 fw-bold text-danger">
 
                         {{ blog.reports|length }}
 
@@ -233,78 +252,60 @@ Review Report | EchoHub Admin
 
                 </div>
 
-                <form action="/admin/reports/{{ blog.id }}/moderate" method="post">
+                {% if latest_report.status.value == "Pending" %}
 
-                    <!-- Status -->
+                <form action="/admin/reports/{{ blog.id }}/status"
+                      method="POST">
 
-                    <div class="mb-4">
+                    <div class="mb-3">
 
-                        <label class="form-label fw-semibold">
+                        <label class="form-label">
 
-                            Report Status
+                            Update Status
 
                         </label>
 
-                        <select name="status" class="form-select">
+                        <select name="status"
+                                class="form-select">
 
-                            <option value="Resolved" {% if latest_report.status.value=="Resolved" %}selected{% endif %}>
+                            <option value="Resolved">
+
                                 Resolved
+
                             </option>
 
-                            <option value="Dismissed" {% if latest_report.status.value=="Dismissed" %}selected{% endif
-                                %}>
+                            <option value="Dismissed">
+
                                 Dismissed
+
                             </option>
 
                         </select>
 
                     </div>
 
-                    <div class="d-grid gap-2">
+                    <button type="submit"
+                            class="btn btn-primary w-100">
 
-                        <button type="submit" name="action" value="None" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i>
 
-                            <i class="bi bi-check-circle"></i>
+                        Update Status
 
-                            Dismiss Reports
-
-                        </button>
-
-                        <button type="submit" name="action" value="Blog Soft Deleted" class="btn btn-warning">
-
-                            <i class="bi bi-eye-slash"></i>
-
-                            Hide Blog
-
-                        </button>
-
-                        <button type="submit" name="action" value="Blog Hard Deleted" class="btn btn-danger">
-
-                            <i class="bi bi-trash"></i>
-
-                            Delete Blog
-
-                        </button>
-
-                        <button type="submit" name="action" value="Author Suspended" class="btn btn-dark">
-
-                            <i class="bi bi-person-lock"></i>
-
-                            Suspend Author
-
-                        </button>
-
-                        <button type="submit" name="action" value="Author Deleted" class="btn btn-outline-danger">
-
-                            <i class="bi bi-person-x"></i>
-
-                            Delete Author
-
-                        </button>
-
-                    </div>
+                    </button>
 
                 </form>
+
+                {% else %}
+
+                <div class="alert alert-light border mb-0">
+
+                    <i class="bi bi-check-circle-fill text-success"></i>
+
+                    This report has already been processed.
+
+                </div>
+
+                {% endif %}
 
             </div>
 

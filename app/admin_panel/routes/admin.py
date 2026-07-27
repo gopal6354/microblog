@@ -4,17 +4,22 @@ from core.config import templates
 from dependencies.auth import require_super_admin
 from models.user import RoleChoice
 from models import Blog, User, Report
-from models.report import ReportStatus, ModerationAction
+from models.report import ReportStatus
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session, selectinload
-from admin_panel.services.admin_service import (
-    is_blog_exist,
-    update_report_moderate,
-    validate_moderation,
-    perform_moderation_action,
-)
 from database import get_db
 import math
+from models.activation_request import ActivationRequestStatus, AccountActivation
+from utils.flash import flash
+from admin_panel.services.admin_service import (
+    is_blog_exist,
+    update_report_status,
+    is_user_exist,
+    soft_delete_user,
+    restore_user,
+    is_activation_request_exist,
+    activation_status_update,
+)
 
 
 router = APIRouter()
@@ -44,6 +49,97 @@ def admin_users_page(
     )
 
 
+# soft delete user
+@router.post("/admin/users/{user_id}/lock")
+def suspend_user(
+    user_id: int,
+    request: Request,
+    session: Session = Depends(get_db),
+    current_user: User = Depends(require_super_admin),
+):
+    user = is_user_exist(user_id, session)
+
+    if not user:
+        print("not found")
+        flash(request, "User not found.", "danger")
+        return RedirectResponse(
+            url="/admin/users",
+            status_code=303,
+        )
+
+    if user.is_deleted:
+        print("already deleted")
+        flash(request, "User is already suspended.", "warning")
+        return RedirectResponse(
+            url="/admin/users",
+            status_code=303,
+        )
+
+    soft_delete_user(user)
+
+    session.commit()
+    print("success")
+    flash(request, "User suspended successfully.", "success")
+
+    return RedirectResponse(
+        url="/admin/users",
+        status_code=303,
+    )
+
+
+# soft delete user restore
+@router.post("/admin/users/{user_id}/restore")
+def admin_restore_user(
+    request: Request,
+    user_id: int,
+    session: Session = Depends(get_db),
+    current_user: User = Depends(require_super_admin),
+):
+    user = is_user_exist(user_id, session)
+    if not user:
+        flash(request, "User not found.", "danger")
+        return RedirectResponse(
+            url="/admin/users",
+            status_code=303,
+        )
+    restore_user(user)
+
+    session.commit()
+    flash(request, "User restore successfully.", "success")
+    return RedirectResponse(
+        url="/admin/users",
+        status_code=303,
+    )
+
+
+# hard delete user
+@router.post("/admin/users/{user_id}/delete")
+def delete_user(
+    user_id: int,
+    request: Request,
+    session: Session = Depends(get_db),
+    current_user: User = Depends(require_super_admin),
+):
+    user = is_user_exist(user_id, session)
+
+    if not user:
+        flash(request, "User not found.", "danger")
+        return RedirectResponse(
+            url="/admin/users",
+            status_code=303,
+        )
+
+    session.delete(user)
+    session.commit()
+
+    flash(request, "User deleted successfully.", "success")
+
+    return RedirectResponse(
+        url="/admin/users",
+        status_code=303,
+    )
+
+
 # admin blogs page
 @router.get("/admin/blogs")
 def admin_blogs_page(
@@ -70,6 +166,92 @@ def admin_blogs_page(
         request=request,
         name="admin/components/blogs.html",
         context={"blogs": blogs, "page": page, "total_pages": total_pages},
+    )
+
+
+# soft delete blog
+@router.post("/admin/blogs/{blog_id}/hide")
+def hide_blog(
+    blog_id: int,
+    request: Request,
+    session: Session = Depends(get_db),
+    current_user: User = Depends(require_super_admin),
+):
+    blog = is_blog_exist(blog_id, session)
+
+    if not blog:
+        flash(request, "Blog not found.", "danger")
+        return RedirectResponse(
+            url="/admin/blogs",
+            status_code=303,
+        )
+
+    if blog.is_hidden:
+        flash(request, "Blog is already hidden.", "warning")
+        return RedirectResponse(
+            url="/admin/blogs",
+            status_code=303,
+        )
+
+    blog.is_hidden = True
+
+    session.commit()
+
+    flash(request, "Blog hidden successfully.", "success")
+
+    return RedirectResponse(
+        url="/admin/blogs",
+        status_code=303,
+    )
+
+
+@router.post("/admin/blogs/{blog_id}/restore")
+def admin_blogs_restore(
+    request: Request,
+    blog_id: int,
+    session: Session = Depends(get_db),
+    current_user: User = Depends(require_super_admin),
+):
+    blog = is_blog_exist(blog_id, session)
+
+    if not blog:
+        flash(request, "Blog not found.", "danger")
+        return RedirectResponse(
+            url="/admin/blogs",
+            status_code=303,
+        )
+
+    blog.is_hidden = False
+
+    session.commit()
+    return RedirectResponse(url="/admin/blogs", status_code=303)
+
+
+# hard delete blog
+@router.post("/admin/blogs/{blog_id}/delete")
+def delete_blog(
+    blog_id: int,
+    request: Request,
+    session: Session = Depends(get_db),
+    current_user: User = Depends(require_super_admin),
+):
+    blog = session.get(Blog, blog_id)
+
+    if not blog:
+        flash(request, "Blog not found.", "danger")
+        return RedirectResponse(
+            url="/admin/blogs",
+            status_code=303,
+        )
+
+    session.delete(blog)
+    session.commit()
+
+    flash(request, "Blog deleted successfully.", "success")
+
+    return RedirectResponse(
+        url="/admin/blogs",
+        status_code=303,
     )
 
 
@@ -119,53 +301,83 @@ def review_report_page(
 
 
 # admin review report status and action update page
-@router.post("/admin/reports/{blog_id}/moderate")
-def moderate_report(
+@router.post("/admin/reports/{blog_id}/status")
+def admin_update_report_status(
     blog_id: int,
     request: Request,
     status: ReportStatus = Form(...),
-    action: ModerationAction = Form(...),
     session: Session = Depends(get_db),
     current_user: User = Depends(require_super_admin),
 ):
     blog = is_blog_exist(blog_id, session)
 
     if not blog:
-        return RedirectResponse(url="/admin/reports", status_code=303)
-
-    is_valid, error = validate_moderation(status, action)
-
-    if not is_valid:
-        return templates.TemplateResponse(
-            request=request,
-            name="admin/components/review_reports.html",
-            context={
-                "blog": blog,
-                "latest_report": blog.reports[-1],
-                "error": error,
-            },
+        flash(request, "Blog not found.", "danger")
+        return RedirectResponse(
+            url="/admin/reports",
+            status_code=303,
         )
 
-    update_report_moderate(
-        blog_id=blog_id, status=status, action=action, session=session
-    )
-
-    perform_moderation_action(
-        blog=blog,
-        action=action,
+    update_report_status(
+        blog_id=blog_id,
+        status=status,
         session=session,
     )
 
     session.commit()
-    print("success")
-    return RedirectResponse(url="/admin/reports/", status_code=303)
+
+    flash(request, "Report status updated successfully.", "success")
+
+    return RedirectResponse(
+        url="/admin/reports",
+        status_code=303,
+    )
 
 
 # admin account activation page
 @router.get("/admin/activation-requests")
 def admin_activation_request_page(
-    request: Request, current_user: User = Depends(require_super_admin)
+    request: Request,
+    current_user: User = Depends(require_super_admin),
+    session: Session = Depends(get_db),
 ):
+    activation_request = session.scalars(
+        select(AccountActivation).options(selectinload(AccountActivation.user))
+    ).all()
+
     return templates.TemplateResponse(
-        request=request, name="admin/components/activation_request.html"
+        request=request,
+        name="admin/components/activation_request.html",
+        context={
+            "activation_requests": activation_request,
+            "ActivationRequestStatus": ActivationRequestStatus,
+        },
     )
+
+
+@router.post("/admin/account-activation/{activation_id}/update")
+def admin_account_activation_update(
+    activation_id: int,
+    request: Request,
+    status: ActivationRequestStatus = Form(...),
+    session: Session = Depends(get_db),
+    current_user: User = Depends(require_super_admin),
+):
+    activation_request = is_activation_request_exist(activation_id, session)
+    if not activation_request:
+        print("not found")
+        flash(request, "Record not found.", "danger")
+        return RedirectResponse(url="/admin/activation-requests")
+    print(status)
+    success, message = activation_status_update(activation_request, status)
+
+    if not success:
+        print("false")
+        flash(request, message, "danger")
+        return RedirectResponse(url="/admin/activation-requests", status_code=303)
+
+    session.commit()
+
+    flash(request, message, "success")
+    print("success")
+    return RedirectResponse(url="/admin/activation-requests", status_code=303)

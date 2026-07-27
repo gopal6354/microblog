@@ -1,151 +1,78 @@
 {% extends "admin/admin_base.html" %}
 
-
-{% block title %}
-
-Users | EchoHub Admin
-
-{% endblock %}
-
-
+{% block title %}Users | EchoHub Admin{% endblock %}
 
 {% block content %}
 
-
 <div class="d-flex justify-content-between align-items-center mb-4">
-
-
     <div>
-
-        <h2>
-            Users Management
-        </h2>
-
-        <p class="text-muted">
-            Manage EchoHub users
-        </p>
-
+        <h2>Users Management</h2>
+        <p class="text-muted">Manage EchoHub users</p>
     </div>
 
-
-
     <div>
-
-        <input
-        type="text"
-        class="form-control"
-        placeholder="Search users...">
-
+        <input type="text" class="form-control" placeholder="Search users...">
     </div>
-
-
 </div>
 
 
-
-
-
 <div class="card admin-card">
-
-
     <div class="card-body">
-
-
 
         <div class="table-responsive">
 
-
             <table class="table table-hover align-middle">
 
-
                 <thead>
-
-
                     <tr>
-
-                        <th>
-                            ID
-                        </th>
-
-                        <th>
-                            Username
-                        </th>
-
-                        <th>
-                            Email
-                        </th>
-
-                        <th>
-                            Role
-                        </th>
-
-                        <th>
-                            Status
-                        </th>
-
-                        <th>
-                            Created
-                        </th>
-
-                        <th>
-                            Action
-                        </th>
-
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Action</th>
                     </tr>
-
-
                 </thead>
-
-
 
 
                 <tbody>
 
                     {% for users in all_user %}
+
                     <tr>
 
+                        <td>{{ users.id }}</td>
 
-                        <td>
-                            {{ users.id }}
-                        </td>
+                        <td>{{ users.username }}</td>
 
-
-                        <td>
-
-                            {{ users.username }}
-                        </td>
+                        <td>{{ users.email }}</td>
 
 
                         <td>
-                            {{ users.email }}
-                        </td>
-
-
-
-                        <td>
-
                             <span class="badge bg-primary">
-
                                 {{ users.role.value }}
-
                             </span>
-
                         </td>
-
-
 
 
                         <td>
 
-                            <span class="badge bg-success">
+                            {% if users.is_deleted %}
 
-                                {{ users.status.value }}
+                                <span class="badge bg-warning text-dark">
+                                    Suspended
+                                </span>
 
-                            </span>
+                            {% else %}
+
+                                <span class="badge bg-success">
+                                    {{ users.status.value }}
+                                </span>
+
+                            {% endif %}
 
                         </td>
-
-
 
 
                         <td>
@@ -153,62 +80,94 @@ Users | EchoHub Admin
                         </td>
 
 
-
-
                         <td>
 
 
-                            <button
-                            class="btn btn-sm btn-info">
+                            <!-- View -->
+                            <a href="/admin/users/{{ users.id }}"
+                               class="btn btn-sm btn-info">
 
                                 <i class="bi bi-eye"></i>
 
-                            </button>
+                            </a>
 
 
 
-                            <button
-                            class="btn btn-sm btn-warning">
-
-                                <i class="bi bi-lock"></i>
-
-                            </button>
+                            {% if users.is_deleted %}
 
 
+                                <!-- Restore User -->
 
-                            <button
-                            class="btn btn-sm btn-danger">
+                                <form action="/admin/users/{{ users.id }}/restore"
+                                      method="POST"
+                                      class="d-inline"
+                                      onsubmit="return confirm('Are you sure you want to restore this user?');">
 
-                                <i class="bi bi-trash"></i>
+                                    <button type="submit"
+                                            class="btn btn-sm btn-success">
 
-                            </button>
+                                        <i class="bi bi-unlock"></i>
 
+                                    </button>
+
+                                </form>
+
+
+                            {% else %}
+
+
+                                <!-- Suspend User -->
+
+                                <form action="/admin/users/{{ users.id }}/lock"
+                                      method="POST"
+                                      class="d-inline"
+                                      onsubmit="return confirm('Are you sure you want to suspend this user?');">
+
+                                    <button type="submit"
+                                            class="btn btn-sm btn-warning">
+
+                                        <i class="bi bi-lock"></i>
+
+                                    </button>
+
+                                </form>
+
+
+                            {% endif %}
+
+
+
+                            <!-- Permanent Delete -->
+
+                            <form action="/admin/users/{{ users.id }}/delete"
+                                  method="POST"
+                                  class="d-inline"
+                                  onsubmit="return confirm('Are you sure you want to permanently delete this user?');">
+
+                                <button type="submit"
+                                        class="btn btn-sm btn-danger">
+
+                                    <i class="bi bi-trash"></i>
+
+                                </button>
+
+                            </form>
 
 
                         </td>
 
-
-
                     </tr>
+
+
                     {% endfor %}
-
-
-
 
                 </tbody>
 
-
             </table>
-
 
         </div>
 
-
     </div>
-
-
 </div>
-
-
 
 {% endblock %}

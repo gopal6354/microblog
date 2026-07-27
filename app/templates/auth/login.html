@@ -5,6 +5,7 @@ EchoHub - Login
 {% endblock %}
 
 {% block content %}
+
 <section class="auth-container">
     <div class="auth-card">
         <div class="auth-logo">
@@ -14,13 +15,22 @@ EchoHub - Login
             </p>
         </div>
 
+        {% if show_activation_request %}
+        <div class="d-grid mb-3">
+            <a href="/account-activation-request" class="btn btn-outline-warning">
+                Request Account Activation
+            </a>
+        </div>
+        {% endif %}
+
+
         <form action="/login" method="POST" autocomplete="on">
             <div class="mb-3">
                 <label for="email" class="form-label">
                     Email
                 </label>
-                <input id="email" name="username" type="text" class="form-control" placeholder="Enter your username or email"
-                    autocomplete="email" required>
+                <input id="email" name="username" type="text" class="form-control"
+                    placeholder="Enter your username or email" autocomplete="email" required>
             </div>
 
             <div class="mb-3">

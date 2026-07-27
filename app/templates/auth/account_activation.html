@@ -1,0 +1,56 @@
+{% extends "auth/auth_base.html" %}
+
+{% block title %}
+EchoHub - Account Activation Request
+{% endblock %}
+
+{% block content %}
+<section class="auth-container">
+    <div class="auth-card">
+
+        <div class="auth-logo">
+            <h1>Account Activation</h1>
+            <p>
+                Your account is currently deactivated. Submit a request below and an administrator will review it.
+            </p>
+        </div>
+
+        <form action="/account-activation-request" method="POST">
+
+            <div class="mb-3">
+                <label for="reason" class="form-label">
+                    Reason for Activation Request
+                </label>
+
+                <textarea
+                    id="reason"
+                    name="message"
+                    class="form-control"
+                    rows="6"
+                    placeholder="Please explain why you would like your account to be reactivated."
+                    required></textarea>
+
+                <div class="form-text">
+                    Provide as much detail as possible to help the administrator review your request.
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-send"></i>
+                Submit Request
+            </button>
+
+        </form>
+
+        <div class="auth-footer mt-4">
+            <p class="mb-0">
+                Remembered your credentials?
+                <a href="/login">
+                    Back to Login
+                </a>
+            </p>
+        </div>
+
+    </div>
+</section>
+{% endblock %}
