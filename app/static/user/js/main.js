@@ -105,42 +105,59 @@ if (textarea) {
     });
 
 }
-
 document.querySelectorAll(".like-btn").forEach(button => {
 
     button.addEventListener("click", async function () {
 
-        console.log("Like button clicked");
-
         const blogId = this.dataset.blogId;
 
-        const response = await fetch(`/blog/${blogId}/like`, {
-            method: "POST"
-        });
+        try {
 
-        const data = await response.json();
+            const response = await fetch(`/blog/${blogId}/like`, {
+                method: "POST",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            });
 
-        if (!data.success) {
-            alert(data.message);
-            return;
+            if (response.status === 401) {
+                window.location.href = "/login";
+                return;
+            }
+
+            if (response.status === 403) {
+                window.location.href = "/admin-dashboard";
+                return;
+            }
+
+            if (!response.ok) {
+                alert("Something went wrong.");
+                return;
+            }
+
+            const data = await response.json();
+
+            const icon = this.querySelector("i");
+            const count = this.querySelector("span");
+
+            if (data.liked) {
+                icon.classList.remove("bi-heart");
+                icon.classList.add("bi-heart-fill", "text-danger");
+            } else {
+                icon.classList.remove("bi-heart-fill", "text-danger");
+                icon.classList.add("bi-heart");
+            }
+
+            count.textContent = data.like_count;
+
+        } catch (error) {
+            console.error(error);
+            alert("Unable to connect to the server.");
         }
-        const icon = this.querySelector("i");
-        const count = this.querySelector("span");
-
-        if (data.liked) {
-            icon.classList.remove("bi-heart");
-            icon.classList.add("bi-heart-fill", "text-danger");
-        } else {
-            icon.classList.remove("bi-heart-fill", "text-danger");
-            icon.classList.add("bi-heart");
-        }
-
-        count.textContent = data.like_count;
 
     });
 
 });
-
 document.querySelectorAll(".report-btn").forEach(button => {
 
     button.addEventListener("click", function () {

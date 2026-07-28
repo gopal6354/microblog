@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, Depends, status, File, UploadFile, Form
 from core.config import templates
-from dependencies.auth import get_current_user
+from dependencies.auth import require_normal_user
 from models.user import User
 from sqlalchemy.orm import Session
 from sqlalchemy import select
@@ -19,11 +19,8 @@ router = APIRouter()
 def user_profile_page(
     request: Request,
     session: Session = Depends(get_db),
-    current_user: User | None = Depends(get_current_user),
+    current_user: User = Depends(require_normal_user),
 ):
-    if not current_user:
-        return RedirectResponse("/login", status_code=303)
-
     blogs = current_user.blogs
     post_count = len(blogs)
 
@@ -37,11 +34,8 @@ def user_profile_page(
 
 @router.get("/profile-edit")
 def edit_profile_page(
-    request: Request, current_user: User | None = Depends(get_current_user)
+    request: Request, current_user: User = Depends(require_normal_user)
 ):
-    if not current_user:
-        return RedirectResponse("/login", status_code=303)
-
     return templates.TemplateResponse(
         request=request,
         name="/user/update_user_profile.html",
@@ -55,11 +49,8 @@ def edit_user_profile(
     user: UpdateUserProfile = Depends(update_profile_form),
     session: Session = Depends(get_db),
     profile_image: UploadFile | None = File(None),
-    current_user: User | None = Depends(get_current_user),
+    current_user: User = Depends(require_normal_user),
 ):
-    if not current_user:
-        return RedirectResponse("/login", status_code=303)
-
     for k, val in user.model_dump(exclude_unset=True).items():
         setattr(current_user, k, val)
 
@@ -77,11 +68,8 @@ def user_blogs(
     request: Request,
     tab: str = "posts",
     session: Session = Depends(get_db),
-    current_user: User | None = Depends(get_current_user),
+    current_user: User = Depends(require_normal_user),
 ):
-    if not current_user:
-        return RedirectResponse("/login", status_code=303)
-
     blogs = session.scalars(
         select(Blog)
         .where(Blog.user_id == current_user.id, Blog.is_hidden.is_(False))
@@ -104,11 +92,8 @@ def user_blogs(
 def delete_blog(
     blog_id: int,
     session: Session = Depends(get_db),
-    current_user: User | None = Depends(get_current_user),
+    current_user: User = Depends(require_normal_user),
 ):
-    if not current_user:
-        return RedirectResponse("/login", status_code=303)
-
     blog = session.get(Blog, blog_id)
 
     if blog and blog.user_id == current_user.id:
@@ -126,11 +111,8 @@ def edit_blog_page(
     request: Request,
     blog_id: int,
     session: Session = Depends(get_db),
-    current_user: User | None = Depends(get_current_user),
+    current_user: User = Depends(require_normal_user),
 ):
-    if not current_user:
-        return RedirectResponse("/login", status_code=303)
-
     blog = session.get(Blog, blog_id)
 
     if not blog or blog.user_id != current_user.id:
@@ -158,11 +140,8 @@ async def update_blog(
     image: UploadFile | None = File(None),
     video: UploadFile | None = File(None),
     session: Session = Depends(get_db),
-    current_user: User | None = Depends(get_current_user),
+    current_user: User = Depends(require_normal_user),
 ):
-    if not current_user:
-        return RedirectResponse("/login", status_code=303)
-
     blog = session.get(Blog, blog_id)
 
     if not blog or blog.user_id != current_user.id:

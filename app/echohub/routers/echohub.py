@@ -6,7 +6,7 @@ from database import get_db
 from models import Blog, User, Like, Report
 from models.report import ReportReason
 from core.config import templates
-from dependencies.auth import get_current_user
+from dependencies.auth import require_normal_user, require_normal_user_api
 from fastapi.responses import JSONResponse
 from fastapi.responses import RedirectResponse
 
@@ -45,7 +45,7 @@ def like_blog(
     blog_id: int,
     request: Request,
     session: Session = Depends(get_db),
-    current_user: User | None = Depends(get_current_user),
+    current_user: User = Depends(require_normal_user_api),
 ):
     if not current_user:
         return JSONResponse(
@@ -78,7 +78,7 @@ def report_blog(
     blog_id: int = Form(...),
     reason: ReportReason = Form(...),
     description: str | None = Form(None),
-    current_user: User | None = Depends(get_current_user),
+    current_user: User = Depends(require_normal_user),
 ):
     blog = session.get(Report, blog_id)
     if blog:

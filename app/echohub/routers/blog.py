@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request, Depends, Form, File, UploadFile
 from sqlalchemy.orm import Session
 from core.config import templates
 from database import get_db
-from dependencies.auth import get_current_user
+from dependencies.auth import require_normal_user
 from models.user import User
 from utils.file_upload import save_file, IMAGE_DIR, VIDEO_DIR
 from fastapi.responses import RedirectResponse
@@ -15,11 +15,9 @@ router = APIRouter()
 @router.get("/create-blog")
 def create_blog_page(
     request: Request,
-    current_user: User | None = Depends(get_current_user),
+    current_user: User = Depends(require_normal_user),
     session: Session = Depends(get_db),
 ):
-    if not current_user:
-        return RedirectResponse(url="/", status_code=303)
     return templates.TemplateResponse(
         request=request,
         name="/blog/blog.html",
@@ -39,7 +37,7 @@ async def create_blog(
     image: UploadFile | None = File(None),
     video: UploadFile | None = File(None),
     session: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_normal_user),
 ):
     image_path = None
     video_path = None
