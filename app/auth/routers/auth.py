@@ -136,8 +136,6 @@ def login_user(
 
     # check user delete
     if is_user_soft_deleted(exist_user):
-        print("use soft deleted")
-
         flash(
             request,
             "Your account has been blocked. Please contact the admin..",
@@ -190,12 +188,12 @@ def login_user(
     # create_refresh_token(data={"sub": str(exist_user.id)})
 
     if is_super_admin(exist_user):
-        flash(request, "Welcome back, Admin!", "success")
+        # flash(request, "Welcome back, Admin!", "success")
         response = RedirectResponse(
             url="/admin-dashboard", status_code=status.HTTP_303_SEE_OTHER
         )
     else:
-        flash(request, "Welcome back!", "success")
+        # flash(request, "Welcome back!", "success")
         response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
 
     response.set_cookie(
@@ -649,7 +647,7 @@ def account_activation(
     request: Request, message: str = Form(...), session: Session = Depends(get_db)
 ):
     activation_user_id = request.session.get("activation_user_id")
-    print(activation_user_id)
+
     if not activation_user_id:
         flash(request, "Try again", "danger")
         return RedirectResponse(url="/login", status_code=303)

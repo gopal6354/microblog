@@ -37,7 +37,7 @@ def send_verification_otp_email(user: User, otp: str):
     subject = "Verify Your EchoHub Account"
 
     body = f"""
-Hi {user.full_name},
+Hi {user.username},
 
 Welcome to EchoHub!
 
@@ -64,7 +64,7 @@ def send_welcome_email(user: User):
     subject = "Welcome to EchoHub "
 
     body = f"""
-Hi {user.full_name},
+Hi {user.username},
 
 Your EchoHub account has been successfully verified.
 
@@ -85,7 +85,7 @@ def send_reset_password_otp_email(user: User, otp: str):
     subject = "EchoHub Password Reset OTP"
 
     body = f"""
-Hi {user.full_name},
+Hi {user.username},
 
 We received a request to reset your password.
 
