@@ -32,7 +32,11 @@ def blogs(request: Request, session: Session = Depends(get_db)):
     return templates.TemplateResponse(
         request=request,
         name="home.html",
-        context={"blogs": blogs, "current_user": current_user},
+        context={
+            "blogs": blogs,
+            "current_user": current_user,
+            "flash": request.session.pop("_flash", None),
+        },
     )
 
 

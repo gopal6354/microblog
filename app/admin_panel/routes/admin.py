@@ -30,7 +30,11 @@ router = APIRouter()
 def admin_dashboard_page(
     request: Request, current_user: User = Depends(require_super_admin)
 ):
-    return templates.TemplateResponse(request=request, name="admin/dashboard.html")
+    return templates.TemplateResponse(
+        request=request,
+        name="admin/dashboard.html",
+        context={"flash": request.session.pop("_flash", None)},
+    )
 
 
 # admin users page
@@ -40,7 +44,11 @@ def admin_users_page(
     current_user: User = Depends(require_super_admin),
     session: Session = Depends(get_db),
 ):
-    all_users = session.scalars(select(User).where(User.role != RoleChoice.SUPER_ADMIN))
+    all_users = session.scalars(
+        select(User)
+        .where(User.role != RoleChoice.SUPER_ADMIN)
+        .order_by(User.is_deleted.asc(), User.created_at.desc())
+    ).all()
 
     return templates.TemplateResponse(
         request=requst,

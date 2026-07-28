@@ -57,10 +57,10 @@
             {% endblock %}
 
         </main>
-
+        {% if current_user %}
         <!-- Right Sidebar -->
         {% include "partials/right_sidebar.html" %}
-
+        {% endif %}
     </div>
 
 

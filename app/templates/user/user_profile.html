@@ -37,7 +37,7 @@ EchoHub | Profile
                 <div>
 
                     <h2 class="mb-1">
-                        {{ user.full_name }}
+                        {{ user.full_name or ""}}
                     </h2>
 
                     <p class="text-body-secondary mb-2">
@@ -53,12 +53,14 @@ EchoHub | Profile
             </div>
 
             <p class="bio mt-3">
-                {{ user.bio | replace('\n', '<br>') | safe }}
+                {{ (user.bio or "") | replace('\n', '<br>') | safe }}
             </p>
-
             <div class="profile-meta mt-3">
-
-                <span>📍 {{ user.city }} {{ user.state }}</span>
+                {% if user.city or user.state %}
+                <span>
+                    📍 {{ user.city or "" }}{% if user.city and user.state %}, {% endif %}{{ user.state or "" }}
+                </span>
+                {% endif %}
 
                 <!-- <span>📅 {{ user.created_at }}</span> -->
 
