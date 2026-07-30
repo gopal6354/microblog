@@ -137,7 +137,7 @@ app/
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/<your-username>/echohub.git
+git clone https://github.com/gopal6354/microblog.git
 ```
 
 ### 2. Navigate to the Project Directory
