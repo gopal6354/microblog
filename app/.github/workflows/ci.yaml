@@ -4,7 +4,7 @@ name : FastAPI CI
 on:
   push:
     branches:
-      - develop
+      - dev
 
 jobs:
   test:
