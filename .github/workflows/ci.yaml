@@ -41,3 +41,6 @@ jobs:
 
       - name: Push Docker image
         run: docker push ghcr.io/${{ github.repository }}:latest
+
+      - name: Trigger Render deployment
+        run: curl --fail --silent --show-error "${{ secrets.RENDER_DEPLOY_HOOK }}"
