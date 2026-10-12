@@ -6,6 +6,9 @@ on:
   push:
     branches:
       - dev
+  pull_request:
+    branches:
+      - dev
 
 # Workflow permissions for the job
 permissions:
@@ -41,6 +44,8 @@ jobs:
 
       # Step 5: Log in to GitHub Container Registry (GHCR)
       - name: Log in GHCR
+        # Only log in to GHCR if the event is a push to the dev branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -49,12 +54,18 @@ jobs:
 
       # Step 6: Build Docker image
       - name: Build Docker image
+        # Only build the Docker image if the event is a push to the dev branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
         run: docker build -t ghcr.io/${{ github.repository }}:latest ./app
 
       # Step 7: Push Docker image to GHCR
       - name: Push Docker image
+        # Only push the Docker image if the event is a push to the dev branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
         run: docker push ghcr.io/${{ github.repository }}:latest
 
       # Step 8: Trigger Render deployment using the deployment hook
       - name: Trigger Render deployment
+        # Only trigger the Render deployment if the event is a push to the dev branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
         run: curl --fail --silent --show-error "${{ secrets.RENDER_DEPLOY_HOOK }}"
