@@ -100,3 +100,7 @@ def report_blog(
         session.rollback()
         return RedirectResponse(url="/", status_code=303)
     return RedirectResponse(url="/", status_code=303)
+
+
+print("EchoHub router loaded successfully.")
+print("EchoHub router loaded successfully.")
