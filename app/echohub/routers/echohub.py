@@ -104,5 +104,3 @@ def report_blog(
 
 print("EchoHub router loaded successfully.")
 print("EchoHub router loaded successfully.")
-
-print("hello world")
