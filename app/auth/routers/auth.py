@@ -43,7 +43,7 @@ def regiter_page(request: Request):
 
 
 # register page
-@router.post("/register")
+@router.post("/registe
 def regiter_user(
     request: Request,
     background_tasks: BackgroundTasks,
