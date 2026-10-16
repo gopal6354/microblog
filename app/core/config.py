@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     EMAIL_ADDRESS: str
     EMAIL_PASSWORD: str
 
+    SENTRY_DSN: str
+    SENTRY_ENVIRONMENT: str
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 

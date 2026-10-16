@@ -11,6 +11,15 @@ from core.middleware import auth_middleware
 from fastapi.responses import RedirectResponse
 from core.exceptions import RedirectException
 
+import sentry_sdk
+
+sentry_sdk.init(
+    dsn=settings.SENTRY_DSN,
+    environment=settings.SENTRY_ENVIRONMENT,
+    enable_logs=True,
+    traces_sample_rate=0.1,
+    send_default_pii=False,
+)
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
