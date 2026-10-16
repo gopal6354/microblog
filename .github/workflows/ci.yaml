@@ -33,6 +33,9 @@ jobs:
         with:
           python-version: 3.12
 
+      - name: Check Python Syntax
+        run:  python -m compileall -q app
+
       # Step 3: Install dependencies
       - name: Install dependencies
         run: pip install -r app/requirements.txt
