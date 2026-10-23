@@ -1,14 +1,16 @@
 #This Name of the workflow is "FastAPI CI"
 name: FastAPI CI
 
-# Workflow triggers on push to the dev branch
+# Workflow triggers on push to the dev branch and main branch, and on pull requests targeting these branches
 on:
   push:
     branches:
       - dev
+      - main
   pull_request:
     branches:
       - dev
+      - main
 
 # Workflow permissions for the job
 permissions:
@@ -48,7 +50,7 @@ jobs:
       # Step 5: Log in to GitHub Container Registry (GHCR)
       - name: Log in GHCR
         # Only log in to GHCR if the event is a push to the dev branch
-        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+        if: github.event_name == 'push'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -57,15 +59,29 @@ jobs:
 
       # Step 6: Build Docker image
       - name: Build Docker image
-        # Only build the Docker image if the event is a push to the dev branch
-        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
-        run: docker build -t ghcr.io/${{ github.repository }}:latest ./app
+        # # Build the Docker image on pushes to dev or main
+        if: github.event_name == 'push'
+        run: |
+          IMAGE="ghcr.io/${{ github.repository}}"
+
+          docker build -t "$IMAGE:${{ github.ref_name }}" ./app
+
+          if [ "${{ github.ref_name }}" == "dev" ]; then
+            docker tag "$IMAGE:dev" "$IMAGE:latest"
+          fi
 
       # Step 7: Push Docker image to GHCR
       - name: Push Docker image
-        # Only push the Docker image if the event is a push to the dev branch
-        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
-        run: docker push ghcr.io/${{ github.repository }}:latest
+        # Push the Docker image on pushes to dev or main
+        if: github.event_name == 'push'
+        run: |
+          IMAGE="ghcr.io/${{ github.repository}}"
+
+          docker push "$IMAGE:${{ github.ref_name }}"
+
+          if [ "${{ github.ref_name }}" == "dev" ]; then
+            docker push "$IMAGE:latest"
+          fi
 
       # Step 8: Trigger Render deployment using the deployment hook
       - name: Trigger Render deployment
