@@ -1,0 +1,397 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}
+Blogs | EchoHub Admin
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+
+        <h2>
+            Blogs Management
+        </h2>
+
+        <p class="text-muted">
+            Manage all EchoHub blogs
+        </p>
+
+    </div>
+
+    <div>
+
+        <input type="text" class="form-control" placeholder="Search blogs...">
+
+    </div>
+
+</div>
+
+<div class="card admin-card">
+
+    <div class="card-body">
+
+        <div class="table-responsive">
+
+            <table class="table table-hover align-middle">
+
+                <thead>
+
+                    <tr>
+
+                        <th>ID</th>
+
+                        <th>Author</th>
+
+                        <th>Content</th>
+
+                        <th>Media</th>
+
+                        <th>Status</th>
+
+                        <th>Created</th>
+
+                        <th>Actions</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for blog in blogs %}
+
+                    <tr>
+
+                        <td>
+
+                            {{ blog.id }}
+
+                        </td>
+
+                        <td>
+
+                            @{{ blog.user.username }}
+
+                        </td>
+
+                        <td>
+
+                            <div style="max-width:300px">
+
+                                {{ blog.content[:80] }}
+
+                                {% if blog.content|length > 80 %}
+                                ...
+                                {% endif %}
+
+                            </div>
+
+                        </td>
+
+                        <td>
+
+                            {% if blog.image %}
+
+                            <img src="{{ url_for('static', path=blog.image) }}" class="rounded"
+                                style="width:70px;height:50px;object-fit:cover;">
+
+                            {% elif blog.video %}
+
+                            <video controls muted style="width:70px;height:50px;object-fit:cover;">
+
+                                <source src="{{ url_for('static', path=blog.video) }}" type="video/mp4">
+
+                            </video>
+
+                            {% else %}
+
+                            <span class="badge bg-secondary">
+
+                                No Media
+
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            {% if blog.is_hidden %}
+
+                            <span class="badge bg-warning text-dark">
+
+                                Hidden
+
+                            </span>
+
+                            {% else %}
+
+                            <span class="badge bg-success">
+
+                                Visible
+
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            {{ blog.created_at.strftime("%d %b %Y") }}
+
+                        </td>
+                        <td>
+
+                            <!-- View -->
+                            <!--
+                            <a href="/admin/blogs/{{ blog.id }}" class="btn btn-sm btn-info">
+
+                                <i class="bi bi-eye"></i>
+
+                            </a>
+                             -->
+                            {% if blog.is_hidden %}
+
+                            <!-- Restore Blog -->
+
+                            <form action="/admin/blogs/{{ blog.id }}/restore" method="POST" class="d-inline"
+                                onsubmit="return confirm('Are you sure you want to restore this blog?');">
+
+                                <button type="submit" class="btn btn-sm btn-success">
+
+                                    <i class="bi bi-eye"></i>
+
+                                </button>
+
+                            </form>
+
+
+                            {% else %}
+
+
+                            <!-- Hide Blog -->
+
+                            <form action="/admin/blogs/{{ blog.id }}/hide" method="POST" class="d-inline"
+                                onsubmit="return confirm('Are you sure you want to hide this blog?');">
+
+                                <button type="submit" class="btn btn-sm btn-warning">
+
+                                    <i class="bi bi-eye-slash"></i>
+
+                                </button>
+
+                            </form>
+
+
+                            {% endif %}
+
+                            <!-- Delete -->
+
+                            <form action="/admin/blogs/{{ blog.id }}/delete" method="POST" class="d-inline"
+                                onsubmit="return confirm('Are you sure you want to permanently delete this blog?');">
+
+                                <button type="submit" class="btn btn-sm btn-danger">
+
+                                    <i class="bi bi-trash"></i>
+
+                                </button>
+
+                            </form>
+
+                        </td>
+
+                        <!-- Hide Blog Modal -->
+
+                        <div class="modal fade" id="hideBlogModal{{ blog.id }}" tabindex="-1">
+
+                            <div class="modal-dialog">
+
+                                <div class="modal-content">
+
+                                    <div class="modal-header">
+
+                                        <h5 class="modal-title">
+
+                                            Hide Blog
+
+                                        </h5>
+
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal">
+
+                                        </button>
+
+                                    </div>
+
+                                    <div class="modal-body">
+
+                                        Are you sure you want to hide this blog?
+
+                                        <br><br>
+
+                                        The blog will no longer be visible to users.
+
+                                    </div>
+
+                                    <div class="modal-footer">
+
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+
+                                            Cancel
+
+                                        </button>
+
+                                        <form action="/admin/blogs/{{ blog.id }}/hide" method="POST">
+
+                                            <button type="submit" class="btn btn-warning">
+
+                                                Hide Blog
+
+                                            </button>
+
+                                        </form>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <!-- Delete Blog Modal -->
+
+                        <div class="modal fade" id="deleteBlogModal{{ blog.id }}" tabindex="-1">
+
+                            <div class="modal-dialog">
+
+                                <div class="modal-content">
+
+                                    <div class="modal-header">
+
+                                        <h5 class="modal-title">
+
+                                            Delete Blog
+
+                                        </h5>
+
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal">
+
+                                        </button>
+
+                                    </div>
+
+                                    <div class="modal-body">
+
+                                        Are you sure you want to permanently delete this blog?
+
+                                        <br><br>
+
+                                        <div class="alert alert-danger mb-0">
+
+                                            <i class="bi bi-exclamation-triangle-fill"></i>
+
+                                            This action cannot be undone.
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="modal-footer">
+
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+
+                                            Cancel
+
+                                        </button>
+
+                                        <form action="/admin/blogs/{{ blog.id }}/delete" method="POST">
+
+                                            <button type="submit" class="btn btn-danger">
+
+                                                Delete Blog
+
+                                            </button>
+
+                                        </form>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        {% else %}
+
+                    <tr>
+
+                        <td colspan="7" class="text-center text-muted py-4">
+
+                            No blogs found.
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Pagination -->
+
+<nav class="mt-4">
+
+    <ul class="pagination justify-content-center">
+
+        <li class="page-item {% if page == 1 %}disabled{% endif %}">
+
+            <a class="page-link" href="{{ url_for('admin_blogs_page') }}?page={{ page-1 }}">
+
+                <i class="bi bi-chevron-left"></i>
+
+            </a>
+
+        </li>
+
+        {% for p in range(1, total_pages + 1) %}
+
+        <li class="page-item {% if p == page %}active{% endif %}">
+
+            <a class="page-link" href="{{ url_for('admin_blogs_page') }}?page={{ p }}">
+
+                {{ p }}
+
+            </a>
+
+        </li>
+
+        {% endfor %}
+
+        <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+
+            <a class="page-link" href="{{ url_for('admin_blogs_page') }}?page={{ page+1 }}">
+
+                <i class="bi bi-chevron-right"></i>
+
+            </a>
+
+        </li>
+
+    </ul>
+
+</nav>
+
+{% endblock %}

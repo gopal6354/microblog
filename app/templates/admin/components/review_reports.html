@@ -1,0 +1,318 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}
+Review Report | EchoHub Admin
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+
+        <h2>Review Report</h2>
+
+        <p class="text-muted">
+            Review the reported blog and update the report status.
+        </p>
+
+    </div>
+
+    <a href="/admin/reports" class="btn btn-outline-secondary">
+
+        <i class="bi bi-arrow-left"></i>
+        Back
+
+    </a>
+
+</div>
+
+<div class="row">
+
+    <!-- Blog Details -->
+
+    <div class="col-lg-8">
+
+        <div class="card admin-card mb-4">
+
+            <div class="card-header">
+
+                <h5 class="mb-0">
+                    Reported Blog
+                </h5>
+
+            </div>
+
+            <div class="card-body">
+
+                <div class="d-flex align-items-center mb-3">
+
+                    <div class="me-3">
+
+                        <img src="https://placehold.co/60x60"
+                             class="rounded-circle"
+                             width="60">
+
+                    </div>
+
+                    <div>
+
+                        <h6 class="mb-1">
+                            {{ blog.user.full_name }}
+                        </h6>
+
+                        <small class="text-muted">
+                            @{{ blog.user.username }}
+                        </small>
+
+                    </div>
+
+                </div>
+
+                <p>
+                    {{ blog.content }}
+                </p>
+
+                {% if blog.image %}
+
+                <img src="{{ url_for('static', path=blog.image) }}"
+                     class="img-fluid rounded mx-auto d-block"
+                     style="max-height:450px;">
+
+                {% elif blog.video %}
+
+                <video class="img-fluid rounded w-100"
+                       controls
+                       style="max-height:450px;">
+
+                    <source src="{{ url_for('static', path=blog.video) }}"
+                            type="video/mp4">
+
+                </video>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        <!-- Reports -->
+
+        <div class="card admin-card">
+
+            <div class="card-header">
+
+                <h5 class="mb-0">
+
+                    Reports
+
+                    <span class="badge bg-danger ms-2">
+
+                        {{ blog.reports|length }}
+
+                    </span>
+
+                </h5>
+
+            </div>
+
+            <div class="card-body">
+
+                <div class="table-responsive">
+
+                    <table class="table table-hover align-middle">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Reporter</th>
+
+                                <th>Reason</th>
+
+                                <th>Description</th>
+
+                                <th>Date</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            {% for report in blog.reports %}
+
+                            <tr>
+
+                                <td>
+
+                                    {{ report.reporter.username }}
+
+                                </td>
+
+                                <td>
+
+                                    <span class="badge bg-danger">
+
+                                        {{ report.reason.value }}
+
+                                    </span>
+
+                                </td>
+
+                                <td>
+
+                                    {{ report.description or "-" }}
+
+                                </td>
+
+                                <td>
+
+                                    {{ report.created_at.strftime("%d %b %Y") }}
+
+                                </td>
+
+                            </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Status Card -->
+
+    <div class="col-lg-4">
+
+        <div class="card admin-card">
+
+            <div class="card-header">
+
+                <h5 class="mb-0">
+                    Report Status
+                </h5>
+
+            </div>
+
+            <div class="card-body">
+
+                <div class="mb-4">
+
+                    <strong>Current Status</strong>
+
+                    <br>
+
+                    {% if latest_report.status.value == "Pending" %}
+
+                    <span class="badge bg-warning">
+
+                        {{ latest_report.status.value }}
+
+                    </span>
+
+                    {% elif latest_report.status.value == "Resolved" %}
+
+                    <span class="badge bg-success">
+
+                        {{ latest_report.status.value }}
+
+                    </span>
+
+                    {% else %}
+
+                    <span class="badge bg-secondary">
+
+                        {{ latest_report.status.value }}
+
+                    </span>
+
+                    {% endif %}
+
+                </div>
+
+                <div class="mb-4">
+
+                    <strong>Total Reports</strong>
+
+                    <br>
+
+                    <span class="fs-3 fw-bold text-danger">
+
+                        {{ blog.reports|length }}
+
+                    </span>
+
+                </div>
+
+                {% if latest_report.status.value == "Pending" %}
+
+                <form action="/admin/reports/{{ blog.id }}/status"
+                      method="POST">
+
+                    <div class="mb-3">
+
+                        <label class="form-label">
+
+                            Update Status
+
+                        </label>
+
+                        <select name="status"
+                                class="form-select">
+
+                            <option value="Resolved">
+
+                                Resolved
+
+                            </option>
+
+                            <option value="Dismissed">
+
+                                Dismissed
+
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <button type="submit"
+                            class="btn btn-primary w-100">
+
+                        <i class="bi bi-check-circle"></i>
+
+                        Update Status
+
+                    </button>
+
+                </form>
+
+                {% else %}
+
+                <div class="alert alert-light border mb-0">
+
+                    <i class="bi bi-check-circle-fill text-success"></i>
+
+                    This report has already been processed.
+
+                </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

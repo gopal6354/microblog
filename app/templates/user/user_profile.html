@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}
+EchoHub | Profile
+{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('static', path='user/css/user_profile.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <!-- Profile Card -->
+    <div class="profile-card">
+
+        <!-- Cover -->
+        <div class="profile-cover"></div>
+
+        <!-- Avatar -->
+        <div class="profile-avatar-wrapper">
+            {% if user.profile_image %}
+            <img src="{{ url_for('static', path=user.profile_image) }}" alt="{{ user.username }}"
+                class="profile-avatar">
+            {% else %}
+            <img src="https://ui-avatars.com/api/?name={{ user.full_name or user.username }}&background=0D8ABC&color=fff&size=300"
+                alt="{{ user.username }}" class="profile-avatar">
+            {% endif %}
+        </div>
+
+        <!-- Profile Content -->
+        <div class="profile-content">
+
+            <div class="d-flex justify-content-between align-items-start flex-wrap">
+
+                <div>
+
+                    <h2 class="mb-1">
+                        {{ user.full_name or ""}}
+                    </h2>
+
+                    <p class="text-body-secondary mb-2">
+                        {{ user.username }}
+                    </p>
+
+                </div>
+
+                <a href="/profile-edit" class="btn btn-primary rounded-pill px-4">
+                    Edit Profile
+                </a>
+
+            </div>
+
+            <p class="bio mt-3">
+                {{ (user.bio or "") | replace('\n', '<br>') | safe }}
+            </p>
+            <div class="profile-meta mt-3">
+                {% if user.city or user.state %}
+                <span>
+                    📍 {{ user.city or "" }}{% if user.city and user.state %}, {% endif %}{{ user.state or "" }}
+                </span>
+                {% endif %}
+
+                <!-- <span>📅 {{ user.created_at }}</span> -->
+
+            </div>
+
+            <div class="profile-stats mt-4">
+
+                <div>
+                    <strong>{{ post_count }}</strong>
+                    <span>Posts</span>
+                </div>
+
+                <div>
+                    <strong>152</strong>
+                    <span>Followers</span>
+                </div>
+
+                <div>
+                    <strong>98</strong>
+                    <span>Following</span>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="profile-nav">
+
+            <a href="/user-blogs?tab=posts">
+                Posts
+            </a>
+            <!--
+    <a href="/user-blogs?tab=likes"
+       class="{% if active_tab == 'likes' %}active{% endif %}">
+        Likes
+    </a>
+
+    <a href="/user-blogs?tab=media"
+       class="{% if active_tab == 'media' %}active{% endif %}">
+        Media
+    </a>
+ -->
+        </div>
+
+        <div class="profile-tab-content">
+
+            {% if active_tab == "posts" %}
+
+            {% for blog in blogs %}
+            {% include "user/profile_post_card.html" %}
+            {% else %}
+
+            <div class="empty-posts">
+                <h5>No Posts Yet</h5>
+                <p>Share your first blog with the EchoHub community.</p>
+            </div>
+
+            {% endfor %}
+
+            {% endif %}
+
+        </div>
+        {% endblock %}

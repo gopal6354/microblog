@@ -1,0 +1,99 @@
+<article class="post-card">
+
+    <div class="post-header">
+
+        <div class="avatar">
+
+            {% if blog.user.profile_image %}
+
+            <img src="{{ url_for('static', path=blog.user.profile_image) }}" alt="{{ blog.user.username }}"
+                class="avatar-img">
+
+            {% else %}
+
+            <i class="bi bi-person-fill"></i>
+
+            {% endif %}
+
+        </div>
+
+        <div class="post-user">
+
+            <div class="user-top">
+
+                <h6>{{ blog.user.full_name or blog.user.username }}</h6>
+
+                <small>
+                    @{{ blog.user.username }}
+                </small>
+
+            </div>
+
+        </div>
+
+        <button class="more-btn">
+            <i class="bi bi-three-dots-vertical"></i>
+        </button>
+
+    </div>
+
+
+    <div class="post-content">
+
+        <p>
+            {{ blog.content }}
+        </p>
+
+        {% if blog.image %}
+
+        <img src="{{ url_for('static', path=blog.image) }}" class="img-fluid rounded mt-3" alt="Blog Image">
+
+        {% endif %}
+
+
+        {% if blog.video %}
+
+        <video class="w-100 rounded mt-3" controls>
+
+            <source src="{{ url_for('static', path=blog.video) }}" type="video/mp4">
+
+            Your browser does not support the video tag.
+
+        </video>
+
+        {% endif %}
+
+    </div>
+
+
+    <div class="post-actions">
+
+        <div class="left-actions">
+            <button type="button" class="like-btn" data-blog-id="{{ blog.id }}">
+                {% if blog.is_liked %}
+                <i class="bi bi-heart-fill text-danger"></i>
+                {% else %}
+                <i class="bi bi-heart"></i>
+                {% endif %}
+
+                <span>{{ blog.likes|length }}</span>
+            </button>
+
+<!--
+            <button>
+                <i class="bi bi-chat"></i>
+                <span>0</span>
+            </button>
+ -->
+        </div>
+
+        {% if current_user.id != blog.user_id %}
+        <button type="button" class="report-btn" data-blog-id="{{ blog.id }}" data-bs-toggle="modal"
+            data-bs-target="#reportModal">
+
+            <i class="bi bi-flag-fill "></i>
+
+        </button>
+        {% endif %}
+    </div>
+</article>

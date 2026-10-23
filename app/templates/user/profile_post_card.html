@@ -1,0 +1,63 @@
+<article class="profile-post">
+
+    <div class="profile-post-header">
+
+        <div class="profile-post-user">
+
+            <div class="profile-post-name">
+                {{ user.full_name or user.username }}
+            </div>
+
+            <div class="profile-post-info">
+                @{{ user.username }}
+                <span class="mx-1">•</span>
+                {{ blog.created_at.strftime("%d %b %Y") }}
+            </div>
+
+        </div>
+
+        <div class="profile-post-actions">
+
+            <a href="/user-blog/{{ blog.id }}/edit" class="action-icon edit-icon">
+                <i class="bi bi-pencil-square"></i>
+            </a>
+
+            <form action="/user-blog/{{ blog.id }}/delete"
+                  method="POST"
+                  class="m-0">
+
+                <button
+                    type="submit"
+                    class="action-icon delete-icon"
+                    onclick="return confirm('Delete this post?')">
+
+                    <i class="bi bi-trash"></i>
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <div class="profile-post-body">
+
+        <p>{{ blog.content }}</p>
+
+        {% if blog.image %}
+        <img
+            src="{{ url_for('static', path=blog.image) }}"
+            class="profile-post-media"
+            alt="Blog image">
+        {% endif %}
+
+        {% if blog.video %}
+        <video controls class="profile-post-media">
+            <source src="{{ url_for('static', path=blog.video) }}" type="video/mp4">
+        </video>
+        {% endif %}
+
+    </div>
+
+</article>

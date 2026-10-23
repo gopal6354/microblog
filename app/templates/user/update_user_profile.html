@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}
+EchoHub | Edit Profile
+{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/user_profile.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <div class="edit-profile-card">
+
+        <h2>Edit Profile</h2>
+
+        <form action="/profile-edit" method="POST" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label class="form-label">Profile Image</label>
+
+                {% if user.profile_image %}
+                <div class="mb-2">
+                    <img src="{{ url_for('static', path=user.profile_image) }}" alt="Profile Image"
+                        class="rounded-circle" width="100" height="100">
+                </div>
+                {% endif %}
+
+                <input type="file" name="profile_image" class="form-control" accept="image/*">
+            </div>
+
+
+
+            <!-- Full Name -->
+            <div class="mb-3">
+
+                <label class="form-label">
+                    Full Name
+                </label>
+
+                <input type="text" name="fullname" value="{{ user.full_name or '' }}" class="form-control"
+                    placeholder="Enter your full name">
+
+            </div>
+
+            <!-- Username -->
+            <div class="mb-3">
+
+                <label class="form-label">
+                    Username
+                </label>
+
+                <input type="text" name="username" value="{{ user.username or '' }}" class="form-control"
+                    placeholder="Enter username">
+
+            </div>
+
+            <!-- Bio -->
+            <div class="mb-3">
+
+                <label class="form-label">
+                    Bio
+                </label>
+
+                <textarea name="bio" class="form-control" rows="4" maxlength="160"
+                    placeholder="Tell everyone about yourself...">{{ user.bio or '' }}</textarea>
+
+            </div>
+
+            <!-- City & State -->
+            <div class="row">
+
+                <div class="col-md-6 mb-3">
+
+                    <label class="form-label">
+                        City
+                    </label>
+
+                    <input type="text" name="city" value="{{ user.city or '' }}" class="form-control"
+                        placeholder="Enter your city">
+
+                </div>
+
+                <div class="col-md-6 mb-3">
+
+                    <label class="form-label">
+                        State
+                    </label>
+
+                    <input type="text" name="state" value="{{ user.state or '' }}" class="form-control"
+                        placeholder="Enter your state">
+
+                </div>
+
+            </div>
+
+            <!-- Buttons -->
+            <div class="d-flex justify-content-end gap-3 mt-4">
+
+                <a href="/user-profile" class="btn btn-outline-secondary">
+                    Cancel
+                </a>
+
+                <button type="submit" class="btn btn-primary">
+                    Save Changes
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

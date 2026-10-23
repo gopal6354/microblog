@@ -1,0 +1,247 @@
+{% extends "admin/admin_base.html" %}
+
+
+
+{% block title %}
+
+Activation Requests | EchoHub Admin
+
+{% endblock %}
+
+
+
+
+
+{% block content %}
+
+
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+
+    <div>
+
+        <h2>
+            Activation Requests
+        </h2>
+
+        <p class="text-muted">
+            Review inactive user activation requests
+        </p>
+
+    </div>
+
+
+
+    <div>
+
+        <select class="form-select">
+
+            <option>
+                All Requests
+            </option>
+
+            <option>
+                Pending
+            </option>
+
+            <option>
+                Approved
+            </option>
+
+            <option>
+                Rejected
+            </option>
+
+        </select>
+
+    </div>
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="card admin-card">
+
+
+    <div class="card-body">
+
+
+        <div class="table-responsive">
+
+
+            <table class="table table-hover align-middle">
+
+
+                <thead>
+
+
+                    <tr>
+
+
+                        <th>
+                            ID
+                        </th>
+
+
+                        <th>
+                            Username
+                        </th>
+
+
+                        <th>
+                            Email
+                        </th>
+
+
+                        <th>
+                            Message
+                        </th>
+
+
+                        <th>
+                            Status
+                        </th>
+
+
+                        <th>
+                            Date
+                        </th>
+
+
+                        <th>
+                            Action
+                        </th>
+
+
+                    </tr>
+
+
+                </thead>
+
+
+
+
+
+                <tbody>
+
+
+                    {% for activation in activation_requests %}
+                    <tr>
+
+
+                        <td>
+                            1
+                        </td>
+
+
+
+                        <td>
+                            {{ activation.user.username }}
+                        </td>
+
+
+
+                        <td>
+                            {{ activation.user.email }}
+                        </td>
+
+
+
+                        <td>
+
+                            <div style="max-width:300px">
+
+                                {{ activation.message }}
+                            </div>
+
+                        </td>
+
+
+
+                        <td>
+
+
+                            <span class="badge bg-warning">
+
+                                {{ activation.status.value }}
+
+                            </span>
+
+
+                        </td>
+
+
+
+                        <td>
+
+                            {{ activation.created_at.strftime("%d %b %Y") }}
+
+                        </td>
+
+
+
+                        <td>
+                            {% if activation.status == ActivationRequestStatus.PENDING %}
+
+                            <form action="/admin/account-activation/{{ activation.id }}/update" method="POST">
+
+                                <select name="status" class="form-select form-select-sm mb-2">
+
+                                    <option value="approved">
+                                        Approved
+                                    </option>
+
+                                    <option value="rejected">
+                                        Rejected
+                                    </option>
+
+                                </select>
+
+                                <button type="submit" class="btn btn-sm btn-primary">
+                                    Update
+                                </button>
+
+                            </form>
+
+                            {% else %}
+
+                            <span class="badge bg-secondary">
+                                Already Processed
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+
+
+                </tbody>
+
+
+            </table>
+
+
+
+        </div>
+
+
+    </div>
+
+
+</div>
+
+
+
+
+{% endblock %}
