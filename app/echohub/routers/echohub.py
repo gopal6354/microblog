@@ -80,8 +80,17 @@ def report_blog(
     description: str | None = Form(None),
     current_user: User = Depends(require_normal_user),
 ):
-    blog = session.get(Report, blog_id)
-    if blog:
+    blog = session.get(Blog, blog_id)
+    if not blog:
+        return RedirectResponse(url="/", status_code=303)
+
+    existing_report = session.scalar(
+        select(Report).where(
+            Report.reporter_id == current_user.id,
+            Report.blog_id == blog_id,
+        )
+    )
+    if existing_report:
         return RedirectResponse(url="/", status_code=303)
 
     create_report = Report(

@@ -35,6 +35,12 @@ def get_current_user(
                 status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
             )
 
+        if payload.get("ver", 0) != user.token_version:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token expired or invalid.",
+            )
+
         return user
 
     except JWTError:

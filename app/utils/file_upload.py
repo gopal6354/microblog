@@ -22,4 +22,4 @@ def save_file(
     with filepath.open("wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    return str(filepath).replace("static/", "")
+    return filepath.relative_to("static").as_posix()

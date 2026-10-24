@@ -105,6 +105,148 @@ if (textarea) {
     });
 
 }
+
+const imageUploadButton = document.getElementById("image-upload-button");
+const postImageInput = document.getElementById("post-image");
+const selectedImageName = document.getElementById("selected-image-name");
+
+if (imageUploadButton && postImageInput) {
+    imageUploadButton.addEventListener("click", function () {
+        postImageInput.click();
+    });
+
+    postImageInput.addEventListener("change", function () {
+        if (selectedImageName) {
+            selectedImageName.textContent = this.files.length
+                ? this.files[0].name
+                : "";
+        }
+    });
+}
+
+const emojiPickerButton = document.getElementById("emoji-picker-button");
+const emojiPicker = document.getElementById("emoji-picker");
+
+if (emojiPickerButton && emojiPicker && textarea) {
+    emojiPickerButton.addEventListener("click", function () {
+        emojiPicker.hidden = !emojiPicker.hidden;
+        this.setAttribute("aria-expanded", String(!emojiPicker.hidden));
+    });
+
+    emojiPicker.querySelectorAll("[data-emoji-code]").forEach(button => {
+        button.addEventListener("click", function () {
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const emoji = this.dataset.emojiCode
+                .split("-")
+                .map(codePoint => String.fromCodePoint(parseInt(codePoint, 16)))
+                .join("");
+            textarea.setRangeText(emoji, start, end, "end");
+            textarea.dispatchEvent(new Event("input", { bubbles: true }));
+            textarea.focus();
+        });
+    });
+}
+
+const locationButton = document.getElementById("location-button");
+const locationInput = document.getElementById("post-location");
+const locationStatus = document.getElementById("post-location-status");
+
+async function reverseGeocode(latitude, longitude) {
+    const query = new URLSearchParams({
+        format: "jsonv2",
+        lat: latitude,
+        lon: longitude,
+        zoom: "14",
+        addressdetails: "1"
+    });
+    const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?${query}`,
+        { headers: { Accept: "application/json" } }
+    );
+    if (!response.ok) throw new Error("Reverse geocoding failed");
+
+    const result = await response.json();
+    const address = result.address || {};
+    const city = address.city || address.town || address.village || address.municipality;
+    const region = address.state || address.county;
+    const placeName = [city, region].filter(Boolean).join(", ")
+        || result.name
+        || result.display_name?.split(",").slice(0, 2).join(", ");
+
+    if (!placeName) throw new Error("No place name found");
+    return placeName;
+}
+
+if (locationButton && locationInput && locationStatus) {
+    locationButton.addEventListener("click", function () {
+        if (!navigator.geolocation) {
+            locationStatus.textContent = "Location is not available in this browser.";
+            return;
+        }
+
+        locationStatus.textContent = "Sharing your coordinates with OpenStreetMap to find a place name...";
+        navigator.geolocation.getCurrentPosition(
+            async position => {
+                const { latitude, longitude } = position.coords;
+                try {
+                    locationInput.value = await reverseGeocode(latitude, longitude);
+                    locationStatus.textContent = `Location added: ${locationInput.value}`;
+                } catch (error) {
+                    locationInput.value = "";
+                    locationStatus.textContent = "Couldn't find a place name. Please try again.";
+                }
+            },
+            () => {
+                locationStatus.textContent = "Location was unavailable or permission was denied.";
+            },
+            { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+        );
+    });
+}
+
+document.querySelectorAll(".post-location[data-blog-id]").forEach(locationLine => {
+    if (locationLine.dataset.canEdit !== "true") return;
+
+    const coordinateMatch = locationLine.dataset.location.match(
+        /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/
+    );
+    if (!coordinateMatch) return;
+
+    const resolveButton = document.createElement("button");
+    resolveButton.type = "button";
+    resolveButton.className = "resolve-location-button";
+    resolveButton.textContent = "Show place name";
+    locationLine.append(" ", resolveButton);
+
+    const status = document.createElement("span");
+    status.className = "resolve-location-status";
+    locationLine.append(" ", status);
+
+    resolveButton.addEventListener("click", async function () {
+        this.disabled = true;
+        status.textContent = "Looking up place...";
+        try {
+            const placeName = await reverseGeocode(coordinateMatch[1], coordinateMatch[2]);
+            const response = await fetch(`/blog/${locationLine.dataset.blogId}/location`, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({ location: placeName })
+            });
+            if (!response.ok) throw new Error("Could not save the place name");
+
+            const result = await response.json();
+            locationLine.querySelector(".post-location-name").textContent = result.location;
+            locationLine.dataset.location = result.location;
+            this.remove();
+            status.remove();
+        } catch (error) {
+            status.textContent = "Could not resolve location. Try again.";
+            this.disabled = false;
+        }
+    });
+});
+
 document.querySelectorAll(".like-btn").forEach(button => {
 
     button.addEventListener("click", async function () {

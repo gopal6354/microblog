@@ -25,7 +25,7 @@ async def auth_middleware(request: Request, call_next):
             try:
                 user = session.get(User, user_id)
                 if user:
-                    if user.is_deleted:
+                    if user.is_deleted or payload.get("ver", 0) != user.token_version:
                         deleted_user = True
                     else:
                         request.state.user = user

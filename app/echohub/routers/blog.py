@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Depends, Form, File, UploadFile
+from fastapi import APIRouter, Request, Depends, Form, File, UploadFile, HTTPException
 from sqlalchemy.orm import Session
 from core.config import templates
 from database import get_db
@@ -34,6 +34,7 @@ def create_blog_page(
 async def create_blog(
     request: Request,
     content: str = Form(...),
+    location: str | None = Form(None),
     image: UploadFile | None = File(None),
     video: UploadFile | None = File(None),
     session: Session = Depends(get_db),
@@ -56,7 +57,7 @@ async def create_blog(
     words = content.split()
 
     if len(words) > 280:
-        flash(request, "Your post cannot exceed 150 words.", "danger")
+        flash(request, "Your post cannot exceed 280 words.", "danger")
         return RedirectResponse(
             url="/create-blog",
             status_code=303,
@@ -70,6 +71,11 @@ async def create_blog(
             status_code=303,
         )
 
+    location = location.strip() if location else None
+    if location and len(location) > 100:
+        flash(request, "Location information is too long.", "danger")
+        return RedirectResponse(url="/", status_code=303)
+
     if has_image:
         image_path = save_file(image, IMAGE_DIR)
 
@@ -81,6 +87,7 @@ async def create_blog(
         content=content,
         image=image_path,
         video=video_path,
+        location=location or None,
     )
 
     session.add(new_blog)
@@ -91,3 +98,25 @@ async def create_blog(
         url="/",
         status_code=303,
     )
+
+
+@router.post("/blog/{blog_id}/location")
+def update_blog_location(
+    blog_id: int,
+    location: str = Form(...),
+    session: Session = Depends(get_db),
+    current_user: User = Depends(require_normal_user),
+):
+    blog = session.get(Blog, blog_id)
+    if not blog:
+        raise HTTPException(status_code=404, detail="Post not found.")
+    if blog.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You cannot edit this post.")
+
+    location = location.strip()
+    if not location or len(location) > 100:
+        raise HTTPException(status_code=400, detail="Invalid location name.")
+
+    blog.location = location
+    session.commit()
+    return {"success": True, "location": location}

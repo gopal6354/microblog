@@ -41,6 +41,7 @@ class User(Base):
     )
     otp_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    token_version: Mapped[int] = mapped_column(default=0, nullable=False)
     blogs = relationship("Blog", back_populates="user", cascade="all,delete-orphan")
     likes = relationship("Like", back_populates="user", cascade="all,delete-orphan")
     reports = relationship(

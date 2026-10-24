@@ -34,6 +34,8 @@ def soft_delete_user(user: User):
     user.is_deleted = True
 
     for blog in user.blogs:
+        if not blog.is_hidden:
+            blog.hidden_by_suspension = True
         blog.is_hidden = True
 
 
@@ -44,7 +46,9 @@ def restore_user(user: User):
     user.is_deleted = False
 
     for blog in user.blogs:
-        blog.is_hidden = False
+        if blog.hidden_by_suspension:
+            blog.is_hidden = False
+            blog.hidden_by_suspension = False
 
 
 def is_activation_request_exist(activation_id: int, session: Session):

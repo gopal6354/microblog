@@ -150,6 +150,21 @@ async def update_blog(
             status_code=303,
         )
 
+    content = content.strip()
+    if not content:
+        flash(request, "Post content cannot be empty.", "danger")
+        return RedirectResponse(
+            url=f"/user-blog/{blog_id}/edit",
+            status_code=303,
+        )
+
+    if len(content.split()) > 280:
+        flash(request, "Your post cannot exceed 280 words.", "danger")
+        return RedirectResponse(
+            url=f"/user-blog/{blog_id}/edit",
+            status_code=303,
+        )
+
     has_image = bool(image and image.filename)
     has_video = bool(video and video.filename)
 
