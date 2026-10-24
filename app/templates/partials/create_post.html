@@ -1,37 +1,52 @@
-<!-- Create post page -->
+<!-- Home page post composer -->
 <section class="create-post-card">
-    <form id="create-post-form">
+    <form id="create-post-form" action="/create-blog" method="POST" enctype="multipart/form-data">
         <div class="create-post-body">
             <div class="avatar">
                 <i class="bi bi-person-fill"></i>
             </div>
             <div class="post-input-area">
-                <textarea id="post-content" rows="1" maxlength="280" placeholder="What's happening?"></textarea>
+                <textarea id="post-content" name="content" rows="1" maxlength="280" placeholder="What's happening?" required></textarea>
             </div>
         </div>
 
         <div class="create-post-footer">
             <div class="post-tools">
-                <button type="button" class="tool-btn">
+                <button type="button" id="image-upload-button" class="tool-btn" aria-label="Add an image" title="Add an image">
                     <i class="bi bi-image"></i>
                 </button>
+                <input type="file" id="post-image" name="image" accept="image/*" hidden>
+                <small id="selected-image-name" aria-live="polite"></small>
 
-                <button type="button" class="tool-btn">
+                <button type="button" id="emoji-picker-button" class="tool-btn" aria-label="Add an emoji" title="Add an emoji" aria-expanded="false">
                     <i class="bi bi-emoji-smile"></i>
                 </button>
 
-                <button type="button" class="tool-btn">
+                <button type="button" id="location-button" class="tool-btn" aria-label="Add your location" title="Add your location">
                     <i class="bi bi-geo-alt"></i>
                 </button>
+                <input type="hidden" id="post-location" name="location">
+                <small id="post-location-status" aria-live="polite"></small>
+
+                <div id="emoji-picker" class="emoji-picker" hidden aria-label="Choose an emoji">
+                    <button type="button" class="emoji-option" data-emoji-code="1F600" aria-label="Insert emoji">&#x1F600;</button>
+                    <button type="button" class="emoji-option" data-emoji-code="1F602" aria-label="Insert emoji">&#x1F602;</button>
+                    <button type="button" class="emoji-option" data-emoji-code="1F970" aria-label="Insert emoji">&#x1F970;</button>
+                    <button type="button" class="emoji-option" data-emoji-code="1F60E" aria-label="Insert emoji">&#x1F60E;</button>
+                    <button type="button" class="emoji-option" data-emoji-code="1F914" aria-label="Insert emoji">&#x1F914;</button>
+                    <button type="button" class="emoji-option" data-emoji-code="1F44D" aria-label="Insert emoji">&#x1F44D;</button>
+                    <button type="button" class="emoji-option" data-emoji-code="1F44F" aria-label="Insert emoji">&#x1F44F;</button>
+                    <button type="button" class="emoji-option" data-emoji-code="1F64F" aria-label="Insert emoji">&#x1F64F;</button>
+                    <button type="button" class="emoji-option" data-emoji-code="2764-FE0F" aria-label="Insert emoji">&#x2764;&#xFE0F;</button>
+                    <button type="button" class="emoji-option" data-emoji-code="1F525" aria-label="Insert emoji">&#x1F525;</button>
+                    <button type="button" class="emoji-option" data-emoji-code="1F389" aria-label="Insert emoji">&#x1F389;</button>
+                    <button type="button" class="emoji-option" data-emoji-code="2728" aria-label="Insert emoji">&#x2728;</button>
+                </div>
             </div>
 
             <div class="post-submit">
-                <small id="character-count">
-                    0 / 280
-                </small>
-                <button type="submit" class="btn btn-primary">
-                    Post
-                </button>
+                <small id="character-count">0 / 280</small>
+                <button type="submit" class="btn btn-primary">Post</button>
             </div>
         </div>
     </form>

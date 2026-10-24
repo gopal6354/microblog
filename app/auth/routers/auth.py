@@ -182,7 +182,9 @@ def login_user(
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
-    access_token = create_access_token(data={"sub": str(exist_user.id)})
+    access_token = create_access_token(
+        data={"sub": str(exist_user.id), "ver": exist_user.token_version}
+    )
 
     # currently not using
     # create_refresh_token(data={"sub": str(exist_user.id)})
@@ -472,6 +474,7 @@ def reset_password_page(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="auth/reset_password.html",
+        context={"flash": request.session.pop("_flash", None)},
     )
 
 
@@ -505,6 +508,17 @@ def reset_password(
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
+    if len(password) < 12:
+        flash(
+            request,
+            "Password must be at least 12 characters long.",
+            "danger",
+        )
+        return RedirectResponse(
+            url="/reset-password",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
     email = request.session.get("otp_email")
     print(email)
     if not email:
@@ -531,6 +545,7 @@ def reset_password(
         )
 
     user.hashed_password = hash_password(password)
+    user.token_version += 1
 
     user.otp = None
     user.otp_expiry = None

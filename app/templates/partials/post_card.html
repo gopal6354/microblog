@@ -29,6 +29,15 @@
 
             </div>
 
+            {% if blog.location %}
+            <small class="post-location" data-blog-id="{{ blog.id }}" data-location="{{ blog.location }}" data-can-edit="{% if current_user and current_user.id == blog.user_id %}true{% else %}false{% endif %}">
+                <i class="bi bi-geo-alt"></i>
+                <span class="post-location-name">{{ blog.location }}</span>
+                <span class="text-muted">·</span>
+                <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap</a>
+            </small>
+            {% endif %}
+
         </div>
 
         <button class="more-btn">

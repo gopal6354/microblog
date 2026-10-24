@@ -17,11 +17,16 @@ class Blog(Base):
     content: Mapped[str] = mapped_column(Text, nullable=False)
     image: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     video: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    location: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
     is_hidden: Mapped[bool] = mapped_column(
+        default=False,
+        nullable=False,
+    )
+    hidden_by_suspension: Mapped[bool] = mapped_column(
         default=False,
         nullable=False,
     )

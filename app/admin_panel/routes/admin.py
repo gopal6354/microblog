@@ -300,6 +300,10 @@ def review_report_page(
         .where(Blog.id == blog_id)
     )
 
+    if not blog or not blog.reports:
+        flash(request, "No reports found for this blog.", "warning")
+        return RedirectResponse(url="/admin/reports", status_code=303)
+
     latest_report = max(blog.reports, key=lambda report: report.created_at)
     return templates.TemplateResponse(
         request=request,
