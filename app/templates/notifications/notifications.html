@@ -32,7 +32,7 @@ EchoHub | Notifications
             <div class="notification-head">
                 <a href="/profile/{{ actor.username }}" class="avatar notification-avatar">
                     {% if actor.profile_image %}
-                    <img src="{{ url_for('static', path=actor.profile_image) }}" alt="{{ actor.username }}"
+                    <img src="{{ media_url(actor.profile_image) }}" alt="{{ actor.username }}"
                         class="avatar-img">
                     {% else %}
                     <i class="bi bi-person-fill"></i>

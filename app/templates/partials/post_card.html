@@ -6,7 +6,7 @@
 
             {% if blog.user.profile_image %}
 
-            <img src="{{ url_for('static', path=blog.user.profile_image) }}" alt="{{ blog.user.username }}"
+            <img src="{{ media_url(blog.user.profile_image) }}" alt="{{ blog.user.username }}"
                 class="avatar-img">
 
             {% else %}
@@ -55,7 +55,7 @@
 
         {% if blog.image %}
 
-        <img src="{{ url_for('static', path=blog.image) }}" class="img-fluid rounded mt-3" alt="Blog Image">
+        <img src="{{ media_url(blog.image) }}" class="img-fluid rounded mt-3" alt="Blog Image">
 
         {% endif %}
 
@@ -64,7 +64,7 @@
 
         <video class="w-100 rounded mt-3" controls>
 
-            <source src="{{ url_for('static', path=blog.video) }}" type="video/mp4">
+            <source src="{{ media_url(blog.video) }}" type="video/mp4">
 
             Your browser does not support the video tag.
 

@@ -2,7 +2,7 @@
 
     <a href="/profile/{{ comment.user.username }}" class="avatar comment-avatar">
         {% if comment.user.profile_image %}
-        <img src="{{ url_for('static', path=comment.user.profile_image) }}" alt="{{ comment.user.username }}"
+        <img src="{{ media_url(comment.user.profile_image) }}" alt="{{ comment.user.username }}"
             class="avatar-img">
         {% else %}
         <i class="bi bi-person-fill"></i>

@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     # set True in production so the auth cookie is only sent over HTTPS
     COOKIE_SECURE: bool = False
 
+    # set True in production to store uploads on cloudinary instead of static/uploads
+    USE_CLOUDINARY: bool = False
+    CLOUDINARY_URL: str = ""
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 

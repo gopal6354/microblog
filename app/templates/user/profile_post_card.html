@@ -47,14 +47,14 @@
 
         {% if blog.image %}
         <img
-            src="{{ url_for('static', path=blog.image) }}"
+            src="{{ media_url(blog.image) }}"
             class="profile-post-media"
             alt="Blog image">
         {% endif %}
 
         {% if blog.video %}
         <video controls class="profile-post-media">
-            <source src="{{ url_for('static', path=blog.video) }}" type="video/mp4">
+            <source src="{{ media_url(blog.video) }}" type="video/mp4">
         </video>
         {% endif %}
 

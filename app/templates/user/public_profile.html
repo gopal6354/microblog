@@ -18,7 +18,7 @@ EchoHub | {{ profile_user.full_name or profile_user.username }}
 
         <div class="profile-avatar-wrapper">
             {% if profile_user.profile_image %}
-            <img src="{{ url_for('static', path=profile_user.profile_image) }}" alt="{{ profile_user.username }}"
+            <img src="{{ media_url(profile_user.profile_image) }}" alt="{{ profile_user.username }}"
                 class="profile-avatar">
             {% else %}
             <img src="https://ui-avatars.com/api/?name={{ profile_user.full_name or profile_user.username }}&background=0D8ABC&color=fff&size=300"

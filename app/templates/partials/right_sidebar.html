@@ -60,7 +60,7 @@
 
                 <div class="avatar">
                     {% if suggested.profile_image %}
-                    <img src="{{ url_for('static', path=suggested.profile_image) }}" alt="{{ suggested.username }}"
+                    <img src="{{ media_url(suggested.profile_image) }}" alt="{{ suggested.username }}"
                         class="avatar-img">
                     {% else %}
                     <i class="bi bi-person-fill"></i>

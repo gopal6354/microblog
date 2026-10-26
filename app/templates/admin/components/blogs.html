@@ -94,14 +94,14 @@ Blogs | EchoHub Admin
 
                             {% if blog.image %}
 
-                            <img src="{{ url_for('static', path=blog.image) }}" class="rounded"
+                            <img src="{{ media_url(blog.image) }}" class="rounded"
                                 style="width:70px;height:50px;object-fit:cover;">
 
                             {% elif blog.video %}
 
                             <video controls muted style="width:70px;height:50px;object-fit:cover;">
 
-                                <source src="{{ url_for('static', path=blog.video) }}" type="video/mp4">
+                                <source src="{{ media_url(blog.video) }}" type="video/mp4">
 
                             </video>
 

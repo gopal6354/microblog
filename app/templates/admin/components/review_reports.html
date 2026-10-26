@@ -75,7 +75,7 @@ Review Report | EchoHub Admin
 
                 {% if blog.image %}
 
-                <img src="{{ url_for('static', path=blog.image) }}"
+                <img src="{{ media_url(blog.image) }}"
                      class="img-fluid rounded mx-auto d-block"
                      style="max-height:450px;">
 
@@ -85,7 +85,7 @@ Review Report | EchoHub Admin
                        controls
                        style="max-height:450px;">
 
-                    <source src="{{ url_for('static', path=blog.video) }}"
+                    <source src="{{ media_url(blog.video) }}"
                             type="video/mp4">
 
                 </video>

@@ -33,7 +33,7 @@ EchoHub | {{ "Followers" if relation == "followers" else "Following" }}
         <a href="/profile/{{ listed.username }}" class="follow-user">
             <div class="avatar">
                 {% if listed.profile_image %}
-                <img src="{{ url_for('static', path=listed.profile_image) }}" alt="{{ listed.username }}"
+                <img src="{{ media_url(listed.profile_image) }}" alt="{{ listed.username }}"
                     class="avatar-img">
                 {% else %}
                 <i class="bi bi-person-fill"></i>

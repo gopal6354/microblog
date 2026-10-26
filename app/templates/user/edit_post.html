@@ -17,7 +17,7 @@
         <label>Current Image</label>
 
         {% if blog.image %}
-            <img src="{{ url_for('static', path=blog.image) }}"
+            <img src="{{ media_url(blog.image) }}"
                  class="img-fluid rounded mb-2">
         {% endif %}
 
@@ -35,7 +35,7 @@
 
         {% if blog.video %}
             <video controls class="w-100 rounded mb-2">
-                <source src="{{ url_for('static', path=blog.video) }}">
+                <source src="{{ media_url(blog.video) }}">
             </video>
         {% endif %}
 

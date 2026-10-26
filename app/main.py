@@ -7,10 +7,11 @@ from echohub.routers import echohub
 from echohub.routers import notification
 from admin_panel.routes import admin
 from starlette.middleware.sessions import SessionMiddleware
-from core.config import settings
+from core.config import settings, templates
 from core.middleware import auth_middleware
 from fastapi.responses import RedirectResponse
 from core.exceptions import RedirectException
+from utils.file_upload import media_url
 
 import sentry_sdk
 
@@ -24,6 +25,8 @@ sentry_sdk.init(
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+templates.env.globals["media_url"] = media_url
 
 
 app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
