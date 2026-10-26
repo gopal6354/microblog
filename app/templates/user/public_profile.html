@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}
+EchoHub | {{ profile_user.full_name or profile_user.username }}
+{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('static', path='user/css/user_profile.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <div class="profile-card">
+
+        <div class="profile-cover"></div>
+
+        <div class="profile-avatar-wrapper">
+            {% if profile_user.profile_image %}
+            <img src="{{ url_for('static', path=profile_user.profile_image) }}" alt="{{ profile_user.username }}"
+                class="profile-avatar">
+            {% else %}
+            <img src="https://ui-avatars.com/api/?name={{ profile_user.full_name or profile_user.username }}&background=0D8ABC&color=fff&size=300"
+                alt="{{ profile_user.username }}" class="profile-avatar">
+            {% endif %}
+        </div>
+
+        <div class="profile-content">
+
+            <div class="d-flex justify-content-between align-items-start flex-wrap">
+
+                <div>
+                    <h2 class="mb-1">
+                        {{ profile_user.full_name or "" }}
+                    </h2>
+
+                    <p class="text-body-secondary mb-2">
+                        @{{ profile_user.username }}
+                    </p>
+                </div>
+
+                {% if current_user %}
+                {% with target_id=profile_user.id, following=is_following %}
+                {% include "partials/follow_button.html" %}
+                {% endwith %}
+                {% else %}
+                <a href="/login" class="btn btn-primary rounded-pill px-4">Follow</a>
+                {% endif %}
+
+            </div>
+
+            <p class="bio mt-3" style="white-space: pre-line;">{{ profile_user.bio or "" }}</p>
+
+            <div class="profile-meta mt-3">
+                {% if profile_user.city or profile_user.state %}
+                <span>
+                    📍 {{ profile_user.city or "" }}{% if profile_user.city and profile_user.state %}, {% endif %}{{ profile_user.state or "" }}
+                </span>
+                {% endif %}
+            </div>
+
+            <div class="profile-stats mt-4">
+
+                <div>
+                    <strong>{{ post_count }}</strong>
+                    <span>Posts</span>
+                </div>
+
+                <a href="/profile/{{ profile_user.username }}/followers">
+                    <strong data-follower-count-for="{{ profile_user.id }}">{{ follower_count }}</strong>
+                    <span>Followers</span>
+                </a>
+
+                <a href="/profile/{{ profile_user.username }}/following">
+                    <strong>{{ following_count }}</strong>
+                    <span>Following</span>
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <section class="posts-container mt-4">
+        {% for blog in blogs %}
+        {% include "partials/post_card.html" %}
+        {% else %}
+        <div class="empty-posts">
+            <h5>No Posts Yet</h5>
+            <p>@{{ profile_user.username }} hasn't shared anything yet.</p>
+        </div>
+        {% endfor %}
+    </section>
+
+</div>
+
+{% include "partials/report_modal.html" %}
+
+{% endblock %}

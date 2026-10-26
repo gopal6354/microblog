@@ -1,8 +1,8 @@
-<article class="post-card">
+<article class="post-card" id="post-{{ blog.id }}">
 
     <div class="post-header">
 
-        <div class="avatar">
+        <a href="/profile/{{ blog.user.username }}" class="avatar">
 
             {% if blog.user.profile_image %}
 
@@ -15,11 +15,11 @@
 
             {% endif %}
 
-        </div>
+        </a>
 
         <div class="post-user">
 
-            <div class="user-top">
+            <a href="/profile/{{ blog.user.username }}" class="user-top">
 
                 <h6>{{ blog.user.full_name or blog.user.username }}</h6>
 
@@ -27,7 +27,7 @@
                     @{{ blog.user.username }}
                 </small>
 
-            </div>
+            </a>
 
             {% if blog.location %}
             <small class="post-location" data-blog-id="{{ blog.id }}" data-location="{{ blog.location }}" data-can-edit="{% if current_user and current_user.id == blog.user_id %}true{% else %}false{% endif %}">
@@ -88,12 +88,11 @@
                 <span>{{ blog.likes|length }}</span>
             </button>
 
-<!--
-            <button>
+            <button type="button" class="action-btn comment-toggle-btn" aria-expanded="false"
+                aria-controls="comments-{{ blog.id }}" aria-label="Show comments">
                 <i class="bi bi-chat"></i>
-                <span>0</span>
+                <span class="comment-count">{{ blog.visible_comments|length }}</span>
             </button>
- -->
         </div>
 
         {% if current_user.id != blog.user_id %}
@@ -105,4 +104,27 @@
         </button>
         {% endif %}
     </div>
+
+
+    <section class="post-comments" id="comments-{{ blog.id }}" hidden>
+
+        <ul class="comment-list">
+            {% for comment in blog.visible_comments %}
+            {% include "partials/comment_item.html" %}
+            {% endfor %}
+        </ul>
+
+        {% if current_user %}
+        <form class="comment-form" data-blog-id="{{ blog.id }}">
+            <input type="text" name="content" class="form-control form-control-sm" maxlength="500"
+                placeholder="Write a comment..." aria-label="Write a comment" required>
+            <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3">Reply</button>
+        </form>
+        {% else %}
+        <p class="comment-login-hint">
+            <a href="/login">Log in</a> to join the conversation.
+        </p>
+        {% endif %}
+
+    </section>
 </article>

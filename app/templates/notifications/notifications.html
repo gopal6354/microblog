@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}
+EchoHub | Notifications
+{% endblock %}
+
+{% block content %}
+
+<header class="feed-header">
+    <div class="feed-title">
+        <h3>Notifications</h3>
+    </div>
+</header>
+
+<section class="notification-list">
+
+    {% for notification in notifications %}
+    {% set actor = notification.actor %}
+
+    <div class="notification-item {% if notification.id in unread_ids %}unread{% endif %}">
+
+        <div class="notification-type-icon {{ notification.type.value }}">
+            {% if notification.type == NotificationType.COMMENT %}
+            <i class="bi bi-chat-fill"></i>
+            {% else %}
+            <i class="bi bi-person-plus-fill"></i>
+            {% endif %}
+        </div>
+
+        <div class="notification-body">
+
+            <div class="notification-head">
+                <a href="/profile/{{ actor.username }}" class="avatar notification-avatar">
+                    {% if actor.profile_image %}
+                    <img src="{{ url_for('static', path=actor.profile_image) }}" alt="{{ actor.username }}"
+                        class="avatar-img">
+                    {% else %}
+                    <i class="bi bi-person-fill"></i>
+                    {% endif %}
+                </a>
+
+                <small class="notification-time">
+                    {{ notification.created_at.strftime("%d %b %Y, %H:%M") }}
+                </small>
+            </div>
+
+            {% if notification.type == NotificationType.COMMENT %}
+
+            <p class="notification-text">
+                <a href="/profile/{{ actor.username }}" class="notification-actor">
+                    {{ actor.full_name or actor.username }}</a>
+                commented on your post
+            </p>
+
+            <a href="/#post-{{ notification.blog_id }}" class="notification-preview">
+                {% if notification.comment %}
+                <span class="notification-comment">“{{ notification.comment.content|truncate(140) }}”</span>
+                {% endif %}
+                {% if notification.blog %}
+                <span class="notification-post">{{ notification.blog.content|truncate(80) }}</span>
+                {% endif %}
+            </a>
+
+            {% else %}
+
+            <div class="notification-follow-row">
+                <p class="notification-text">
+                    <a href="/profile/{{ actor.username }}" class="notification-actor">
+                        {{ actor.full_name or actor.username }}</a>
+                    started following you
+                </p>
+
+                {% with target_id=actor.id, following=(actor.id in followed_ids) %}
+                {% include "partials/follow_button.html" %}
+                {% endwith %}
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+    {% else %}
+
+    <div class="empty-posts">
+        <i class="bi bi-bell notification-empty-icon"></i>
+        <h5>Nothing to see here — yet</h5>
+        <p>When someone comments on your posts or follows you, you'll see it here.</p>
+    </div>
+
+    {% endfor %}
+
+</section>
+
+{% endblock %}

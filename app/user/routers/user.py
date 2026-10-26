@@ -1,14 +1,22 @@
 from fastapi import APIRouter, Request, Depends, status, File, UploadFile, Form
 from core.config import templates
-from dependencies.auth import require_normal_user
+from dependencies.auth import require_normal_user, require_normal_user_api
 from models.user import User
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from database import get_db
 from schemas.dependencies import update_profile_form
 from schemas.auth import UpdateUserProfile
-from fastapi.responses import RedirectResponse
-from models.blogs import Blog
+from fastapi.responses import RedirectResponse, JSONResponse
+from models import Blog, Comment, Follow
+from echohub.services.social_service import (
+    annotate_blogs,
+    can_be_followed,
+    follow_counts,
+    is_following,
+)
+from echohub.services.notification_service import notify_follow
 from utils.file_upload import (
     save_file,
     delete_file,
@@ -32,14 +40,16 @@ def user_profile_page(
 ):
     blogs = current_user.blogs
     post_count = len(blogs)
+    follower_count, following_count = follow_counts(session, current_user.id)
 
-    # user = sesssion.scalars(select(User).where((User.username)))
     return templates.TemplateResponse(
         request=request,
         name="/user/user_profile.html",
         context={
             "user": current_user,
             "post_count": post_count,
+            "follower_count": follower_count,
+            "following_count": following_count,
             "flash": request.session.pop("_flash", None),
         },
     )
@@ -121,6 +131,7 @@ def user_blogs(
         .order_by(Blog.created_at.desc())
     ).all()
     post_count = len(blogs)
+    follower_count, following_count = follow_counts(session, current_user.id)
     return templates.TemplateResponse(
         request=request,
         name="/user/user_profile.html",
@@ -128,6 +139,8 @@ def user_blogs(
             "user": current_user,
             "blogs": blogs,
             "post_count": post_count,
+            "follower_count": follower_count,
+            "following_count": following_count,
             "active_tab": tab,
             "flash": request.session.pop("_flash", None),
         },
@@ -258,4 +271,154 @@ async def update_blog(
     return RedirectResponse(
         url="/user-blogs",
         status_code=303,
+    )
+
+
+def get_visible_profile(session: Session, username: str):
+    profile_user = session.scalar(select(User).where(User.username == username))
+    return profile_user if can_be_followed(profile_user) else None
+
+
+@router.get("/profile/{username}")
+def public_profile(
+    request: Request,
+    username: str,
+    session: Session = Depends(get_db),
+):
+    current_user = request.state.user
+    profile_user = get_visible_profile(session, username)
+
+    if not profile_user:
+        flash(request, "User not found.", "warning")
+        return RedirectResponse(url="/", status_code=303)
+
+    if current_user and current_user.id == profile_user.id:
+        return RedirectResponse(url="/user-blogs", status_code=303)
+
+    blogs = session.scalars(
+        select(Blog)
+        .options(
+            selectinload(Blog.user),
+            selectinload(Blog.likes),
+            selectinload(Blog.comments).selectinload(Comment.user),
+        )
+        .where(Blog.user_id == profile_user.id, Blog.is_hidden.is_(False))
+        .order_by(Blog.created_at.desc())
+    ).all()
+    annotate_blogs(blogs, current_user)
+    follower_count, following_count = follow_counts(session, profile_user.id)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="/user/public_profile.html",
+        context={
+            "profile_user": profile_user,
+            "current_user": current_user,
+            "blogs": blogs,
+            "post_count": len(blogs),
+            "follower_count": follower_count,
+            "following_count": following_count,
+            "is_following": is_following(session, current_user, profile_user.id),
+            "flash": request.session.pop("_flash", None),
+        },
+    )
+
+
+@router.get("/profile/{username}/{relation}")
+def follow_list(
+    request: Request,
+    username: str,
+    relation: str,
+    session: Session = Depends(get_db),
+):
+    if relation not in ("followers", "following"):
+        return RedirectResponse(url=f"/profile/{username}", status_code=303)
+
+    profile_user = get_visible_profile(session, username)
+    if not profile_user:
+        flash(request, "User not found.", "warning")
+        return RedirectResponse(url="/", status_code=303)
+
+    if relation == "followers":
+        query = (
+            select(User)
+            .join(Follow, Follow.follower_id == User.id)
+            .where(Follow.followed_id == profile_user.id)
+        )
+    else:
+        query = (
+            select(User)
+            .join(Follow, Follow.followed_id == User.id)
+            .where(Follow.follower_id == profile_user.id)
+        )
+    users = session.scalars(
+        query.where(User.is_deleted.is_(False)).order_by(Follow.created_at.desc())
+    ).all()
+
+    current_user = request.state.user
+    followed_ids = set()
+    if current_user:
+        followed_ids = set(
+            session.scalars(
+                select(Follow.followed_id).where(Follow.follower_id == current_user.id)
+            ).all()
+        )
+
+    return templates.TemplateResponse(
+        request=request,
+        name="/user/follow_list.html",
+        context={
+            "profile_user": profile_user,
+            "relation": relation,
+            "users": users,
+            "current_user": current_user,
+            "followed_ids": followed_ids,
+            "flash": request.session.pop("_flash", None),
+        },
+    )
+
+
+@router.post("/user/{user_id}/follow")
+def toggle_follow(
+    user_id: int,
+    session: Session = Depends(get_db),
+    current_user: User = Depends(require_normal_user_api),
+):
+    if user_id == current_user.id:
+        return JSONResponse(
+            {"success": False, "message": "You cannot follow yourself."},
+            status_code=400,
+        )
+
+    target = session.get(User, user_id)
+    if not can_be_followed(target):
+        return JSONResponse(
+            {"success": False, "message": "User not found"}, status_code=404
+        )
+
+    existing = session.scalar(
+        select(Follow).where(
+            Follow.follower_id == current_user.id, Follow.followed_id == user_id
+        )
+    )
+
+    if existing:
+        session.delete(existing)
+        following = False
+    else:
+        follow = Follow(follower_id=current_user.id, followed_id=user_id)
+        session.add(follow)
+        notify_follow(session, follow)
+        following = True
+
+    try:
+        session.commit()
+    except IntegrityError:
+        # concurrent duplicate follow; the follow already exists
+        session.rollback()
+        following = True
+
+    follower_count, _ = follow_counts(session, user_id)
+    return JSONResponse(
+        {"success": True, "following": following, "follower_count": follower_count}
     )

@@ -37,6 +37,26 @@
 
             <li>
 
+                <a href="/notifications">
+
+                    <div class="notification-icon">
+                        <i class="bi bi-bell"></i>
+                        {% if request.state.unread_notifications %}
+                        <small class="notification-badge"
+                            aria-label="{{ request.state.unread_notifications }} unread notifications">
+                            {{ request.state.unread_notifications if request.state.unread_notifications < 100 else "99+" }}
+                        </small>
+                        {% endif %}
+                    </div>
+
+                    <span>Notifications</span>
+
+                </a>
+
+            </li>
+
+            <li>
+
                 <a href="/user-profile">
 
                     <i class="bi bi-person"></i>

@@ -1,0 +1,5 @@
+{# expects: target_id, following #}
+<button type="button" class="btn btn-sm rounded-pill follow-btn {% if following %}btn-outline-primary{% else %}btn-primary{% endif %}"
+    data-user-id="{{ target_id }}" data-following="{{ 'true' if following else 'false' }}">
+    {% if following %}Following{% else %}Follow{% endif %}
+</button>

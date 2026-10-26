@@ -4,10 +4,12 @@ from jose import JWTError
 from core.config import decode_token
 from database import Session
 from models.user import User
+from echohub.services.notification_service import unread_notification_count
 
 
 async def auth_middleware(request: Request, call_next):
     request.state.user = None
+    request.state.unread_notifications = 0
     deleted_user = False
 
     token = request.cookies.get("access_token")
@@ -29,6 +31,9 @@ async def auth_middleware(request: Request, call_next):
                         deleted_user = True
                     else:
                         request.state.user = user
+                        request.state.unread_notifications = unread_notification_count(
+                            session, user.id
+                        )
 
             finally:
                 session.close()

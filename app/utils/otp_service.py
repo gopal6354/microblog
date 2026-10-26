@@ -22,7 +22,7 @@ def generate_and_send_otp(
     request: Request | None = None,
 ):
     otp = generate_otp()
-
+    print(otp)  # for testing purposes; in production, remove this line
     user.otp = otp
     user.otp_expiry = datetime.now(timezone.utc) + timedelta(minutes=5)
 

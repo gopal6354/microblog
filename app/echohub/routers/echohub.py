@@ -3,12 +3,19 @@ from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import select, func
 from database import get_db
-from models import Blog, User, Like, Report
+from models import Blog, User, Like, Report, Comment
 from models.report import ReportReason
 from core.config import templates
 from dependencies.auth import require_normal_user, require_normal_user_api
 from fastapi.responses import JSONResponse
 from fastapi.responses import RedirectResponse
+from echohub.services.social_service import (
+    MAX_COMMENT_LENGTH,
+    annotate_blogs,
+    suggested_users,
+    visible_comment_count,
+)
+from echohub.services.notification_service import notify_comment
 
 router = APIRouter()
 
@@ -18,16 +25,16 @@ def blogs(request: Request, session: Session = Depends(get_db)):
     current_user = request.state.user
     blogs = session.scalars(
         select(Blog)
-        .options(selectinload(Blog.user), selectinload(Blog.likes))
+        .options(
+            selectinload(Blog.user),
+            selectinload(Blog.likes),
+            selectinload(Blog.comments).selectinload(Comment.user),
+        )
         .where(Blog.is_hidden.is_(False))
         .order_by(Blog.created_at.desc())
     ).all()
 
-    for blog in blogs:
-        if current_user:
-            blog.is_liked = any(like.user_id == current_user.id for like in blog.likes)
-        else:
-            blog.is_liked = False
+    annotate_blogs(blogs, current_user)
 
     return templates.TemplateResponse(
         request=request,
@@ -35,6 +42,7 @@ def blogs(request: Request, session: Session = Depends(get_db)):
         context={
             "blogs": blogs,
             "current_user": current_user,
+            "suggested_users": suggested_users(session, current_user),
             "flash": request.session.pop("_flash", None),
         },
     )
@@ -81,6 +89,82 @@ def like_blog(
     )
 
     return JSONResponse({"success": True, "liked": liked, "like_count": like_count})
+
+
+@router.post("/blog/{blog_id}/comment")
+def add_comment(
+    blog_id: int,
+    request: Request,
+    content: str = Form(...),
+    session: Session = Depends(get_db),
+    current_user: User = Depends(require_normal_user_api),
+):
+    blog = session.get(Blog, blog_id)
+    if not blog or blog.is_hidden:
+        return JSONResponse(
+            {"success": False, "message": "Post not found"}, status_code=404
+        )
+
+    content = content.strip()
+    if not content:
+        return JSONResponse(
+            {"success": False, "message": "Comment cannot be empty."}, status_code=400
+        )
+    if len(content) > MAX_COMMENT_LENGTH:
+        return JSONResponse(
+            {
+                "success": False,
+                "message": f"Comment cannot exceed {MAX_COMMENT_LENGTH} characters.",
+            },
+            status_code=400,
+        )
+
+    comment = Comment(user_id=current_user.id, blog_id=blog_id, content=content)
+    session.add(comment)
+    notify_comment(session, blog, comment)
+    session.commit()
+    session.refresh(comment)
+
+    # render the same partial the feed uses so new comments look identical
+    comment_html = templates.get_template("partials/comment_item.html").render(
+        request=request, comment=comment, current_user=current_user
+    )
+
+    return JSONResponse(
+        {
+            "success": True,
+            "comment_html": comment_html,
+            "comment_count": visible_comment_count(session, blog_id),
+        }
+    )
+
+
+@router.post("/comment/{comment_id}/delete")
+def delete_comment(
+    comment_id: int,
+    session: Session = Depends(get_db),
+    current_user: User = Depends(require_normal_user_api),
+):
+    comment = session.get(Comment, comment_id)
+    if not comment:
+        return JSONResponse(
+            {"success": False, "message": "Comment not found"}, status_code=404
+        )
+
+    # only the comment author can remove a comment
+    if current_user.id != comment.user_id:
+        return JSONResponse(
+            {"success": False, "message": "You cannot delete this comment."},
+            status_code=403,
+        )
+
+    blog_id = comment.blog_id
+    session.delete(comment)
+    session.commit()
+
+    return JSONResponse(
+        {"success": True, "comment_count": visible_comment_count(session, blog_id)}
+    )
 
 
 @router.post("/report/blog")

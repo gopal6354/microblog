@@ -33,3 +33,10 @@ class Blog(Base):
     user = relationship("User", back_populates="blogs")
     likes = relationship("Like", back_populates="blog", cascade="all,delete-orphan")
     reports = relationship("Report", back_populates="blog", cascade="all,delete-orphan")
+    comments = relationship(
+        "Comment",
+        back_populates="blog",
+        cascade="all,delete-orphan",
+        order_by="Comment.created_at",
+    )
+    notifications = relationship("Notification", cascade="all,delete-orphan")

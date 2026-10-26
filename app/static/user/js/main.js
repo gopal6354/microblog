@@ -312,12 +312,145 @@ document.querySelectorAll(".report-btn").forEach(button => {
 
 });
 // ================================
+// Comments
+// ================================
+
+// redirects to login/admin for auth failures; returns null when handled
+async function postAction(url, body) {
+    const response = await fetch(url, {
+        method: "POST",
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+        body
+    });
+
+    if (response.status === 401) {
+        window.location.href = "/login";
+        return null;
+    }
+
+    const data = await response.json().catch(() => ({}));
+
+    // the admin guard answers 403 without our own "message" field
+    if (response.status === 403 && !data.message) {
+        window.location.href = "/admin-dashboard";
+        return null;
+    }
+
+    if (!response.ok) throw new Error(data.message || "Something went wrong.");
+    return data;
+}
+
+function updateCommentCount(postCard, count) {
+    const counter = postCard.querySelector(".comment-count");
+    if (counter) counter.textContent = count;
+}
+
+document.querySelectorAll(".comment-toggle-btn").forEach(button => {
+    button.addEventListener("click", function () {
+        const section = document.getElementById(this.getAttribute("aria-controls"));
+        section.hidden = !section.hidden;
+        this.setAttribute("aria-expanded", String(!section.hidden));
+
+        if (!section.hidden) {
+            section.querySelector(".comment-form input")?.focus();
+        }
+    });
+});
+
+document.querySelectorAll(".comment-form").forEach(form => {
+    form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const input = this.querySelector("input[name='content']");
+        const submit = this.querySelector("button[type='submit']");
+        const content = input.value.trim();
+        if (!content) return;
+
+        submit.disabled = true;
+        try {
+            const data = await postAction(
+                `/blog/${this.dataset.blogId}/comment`,
+                new URLSearchParams({ content })
+            );
+            if (!data) return;
+
+            // server-rendered partial, content is already escaped by Jinja
+            const list = this.closest(".post-comments").querySelector(".comment-list");
+            list.insertAdjacentHTML("beforeend", data.comment_html);
+            updateCommentCount(this.closest(".post-card"), data.comment_count);
+            input.value = "";
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            submit.disabled = false;
+        }
+    });
+});
+
+// a comment notification links to /#post-<id>; open that post's comments
+const linkedPost = window.location.hash.match(/^#post-\d+$/)
+    && document.querySelector(window.location.hash);
+if (linkedPost) {
+    const toggle = linkedPost.querySelector(".comment-toggle-btn");
+    if (toggle && toggle.getAttribute("aria-expanded") !== "true") toggle.click();
+    linkedPost.scrollIntoView({ block: "start" });
+}
+
+// delegated so freshly added comments can be deleted too
+document.addEventListener("click", async function (e) {
+    const button = e.target.closest(".comment-delete-btn");
+    if (!button || !confirm("Delete this comment?")) return;
+
+    button.disabled = true;
+    try {
+        const data = await postAction(`/comment/${button.dataset.commentId}/delete`);
+        if (!data) return;
+
+        const postCard = button.closest(".post-card");
+        button.closest(".comment-item").remove();
+        updateCommentCount(postCard, data.comment_count);
+    } catch (error) {
+        alert(error.message);
+        button.disabled = false;
+    }
+});
+
+// ================================
+// Follow Button
+// ================================
+
+document.querySelectorAll(".follow-btn").forEach(button => {
+    button.addEventListener("click", async function () {
+        const userId = this.dataset.userId;
+
+        this.disabled = true;
+        try {
+            const data = await postAction(`/user/${userId}/follow`);
+            if (!data) return;
+
+            // keep every button for this user in sync (sidebar, profile, lists)
+            document.querySelectorAll(`.follow-btn[data-user-id="${userId}"]`).forEach(btn => {
+                btn.dataset.following = String(data.following);
+                btn.textContent = data.following ? "Following" : "Follow";
+                btn.classList.toggle("btn-primary", !data.following);
+                btn.classList.toggle("btn-outline-primary", data.following);
+            });
+
+            document.querySelectorAll(`[data-follower-count-for="${userId}"]`).forEach(el => {
+                el.textContent = data.follower_count;
+            });
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            this.disabled = false;
+        }
+    });
+});
+
+// ================================
 // Future JavaScript
 // ================================
 
-// Character Counter
-// Post Like
-// Follow Button
 // Search
 // Notifications
 // Infinite Scroll

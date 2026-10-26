@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}
+EchoHub | {{ "Followers" if relation == "followers" else "Following" }}
+{% endblock %}
+
+{% block content %}
+
+<header class="feed-header">
+    <div class="feed-title">
+        <h3>
+            <a href="/profile/{{ profile_user.username }}" class="follow-list-back" aria-label="Back to profile">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            {{ profile_user.full_name or profile_user.username }}
+        </h3>
+    </div>
+
+    <nav class="follow-list-tabs">
+        <a href="/profile/{{ profile_user.username }}/followers"
+            class="{% if relation == 'followers' %}active{% endif %}">Followers</a>
+        <a href="/profile/{{ profile_user.username }}/following"
+            class="{% if relation == 'following' %}active{% endif %}">Following</a>
+    </nav>
+</header>
+
+<section class="follow-list">
+
+    {% for listed in users %}
+
+    <div class="follow-item">
+
+        <a href="/profile/{{ listed.username }}" class="follow-user">
+            <div class="avatar">
+                {% if listed.profile_image %}
+                <img src="{{ url_for('static', path=listed.profile_image) }}" alt="{{ listed.username }}"
+                    class="avatar-img">
+                {% else %}
+                <i class="bi bi-person-fill"></i>
+                {% endif %}
+            </div>
+
+            <div>
+                <strong>{{ listed.full_name or listed.username }}</strong>
+                <small>@{{ listed.username }}</small>
+            </div>
+        </a>
+
+        {% if current_user and current_user.id != listed.id %}
+        {% with target_id=listed.id, following=(listed.id in followed_ids) %}
+        {% include "partials/follow_button.html" %}
+        {% endwith %}
+        {% endif %}
+
+    </div>
+
+    {% else %}
+
+    <div class="empty-posts">
+        {% if relation == "followers" %}
+        <h5>No followers yet</h5>
+        <p>When people follow @{{ profile_user.username }}, they'll show up here.</p>
+        {% else %}
+        <h5>Not following anyone yet</h5>
+        <p>When @{{ profile_user.username }} follows people, they'll show up here.</p>
+        {% endif %}
+    </div>
+
+    {% endfor %}
+
+</section>
+
+{% endblock %}

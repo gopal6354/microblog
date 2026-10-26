@@ -37,7 +37,7 @@ EchoHub - Register
                     Password
                 </label>
                 <input id="password" name="password" type="password" class="form-control"
-                    placeholder="Create a password" autocomplete="new-password" required>
+                    placeholder="Create a password (min. 8 characters)" autocomplete="new-password" minlength="8" required>
             </div>
 
 
@@ -46,7 +46,7 @@ EchoHub - Register
                     Confirm Password
                 </label>
                 <input id="confirm_password" name="confirm_password" type="password" class="form-control"
-                    placeholder="Confirm your password" autocomplete="new-password" required>
+                    placeholder="Confirm your password" autocomplete="new-password" minlength="8" required>
             </div>
 
             <button type="submit" class="btn btn-primary w-100">

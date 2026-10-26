@@ -3,6 +3,18 @@ from .blogs import Blog
 from .like import Like
 from .report import Report
 from .activation_request import AccountActivation
+from .comment import Comment
+from .follow import Follow
+from .notification import Notification
 
 
-__all__ = ["User", "Blog", "Like", "Report", "AccountActivation"]
+__all__ = [
+    "User",
+    "Blog",
+    "Like",
+    "Report",
+    "AccountActivation",
+    "Comment",
+    "Follow",
+    "Notification",
+]

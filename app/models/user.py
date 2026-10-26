@@ -47,6 +47,32 @@ class User(Base):
     reports = relationship(
         "Report", back_populates="reporter", cascade="all,delete-orphan"
     )
+    comments = relationship(
+        "Comment", back_populates="user", cascade="all,delete-orphan"
+    )
+    # Follow rows where this user is the follower / the one being followed
+    following = relationship(
+        "Follow",
+        foreign_keys="Follow.follower_id",
+        back_populates="follower",
+        cascade="all,delete-orphan",
+    )
+    followers = relationship(
+        "Follow",
+        foreign_keys="Follow.followed_id",
+        back_populates="followed",
+        cascade="all,delete-orphan",
+    )
+    notifications = relationship(
+        "Notification",
+        foreign_keys="Notification.recipient_id",
+        cascade="all,delete-orphan",
+    )
+    sent_notifications = relationship(
+        "Notification",
+        foreign_keys="Notification.actor_id",
+        cascade="all,delete-orphan",
+    )
 
     activation_requests = relationship(
         "AccountActivation", back_populates="user", cascade="all,delete-orphan"

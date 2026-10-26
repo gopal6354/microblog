@@ -44,68 +44,50 @@
 
     <!-- Who To Follow -->
 
+    {% if suggested_users %}
+
     <section class="sidebar-card mt-3">
 
         <h5 class="sidebar-title">
             Who to Follow
         </h5>
 
-
-
-        <div class="follow-item">
-
-            <div class="follow-user">
-
-                <div class="avatar">
-
-                    <i class="bi bi-person-fill"></i>
-
-                </div>
-
-                <div>
-
-                    <strong>John Doe</strong>
-
-                    <small>@johndoe</small>
-
-                </div>
-
-            </div>
-
-            <button class="btn btn-sm btn-primary">
-                Follow
-            </button>
-
-        </div>
-
-
+        {% for suggested in suggested_users %}
 
         <div class="follow-item">
 
-            <div class="follow-user">
+            <a href="/profile/{{ suggested.username }}" class="follow-user">
 
                 <div class="avatar">
-
+                    {% if suggested.profile_image %}
+                    <img src="{{ url_for('static', path=suggested.profile_image) }}" alt="{{ suggested.username }}"
+                        class="avatar-img">
+                    {% else %}
                     <i class="bi bi-person-fill"></i>
-
+                    {% endif %}
                 </div>
 
                 <div>
-
-                    <strong>Jane Smith</strong>
-
-                    <small>@janesmith</small>
-
+                    <strong>{{ suggested.full_name or suggested.username }}</strong>
+                    <small>@{{ suggested.username }}</small>
                 </div>
 
-            </div>
+            </a>
 
-            <button class="btn btn-sm btn-primary">
-                Follow
-            </button>
+            {% if current_user %}
+            {% with target_id=suggested.id, following=False %}
+            {% include "partials/follow_button.html" %}
+            {% endwith %}
+            {% else %}
+            <a href="/login" class="btn btn-sm btn-primary rounded-pill">Follow</a>
+            {% endif %}
 
         </div>
+
+        {% endfor %}
 
     </section>
+
+    {% endif %}
 
 </aside>

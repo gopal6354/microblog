@@ -29,7 +29,7 @@ from models.activation_request import AccountActivation, ActivationRequestStatus
 
 router = APIRouter()
 
-MIN_PASSWORD_LENGTH = 12
+MIN_PASSWORD_LENGTH = 8
 
 
 # register page

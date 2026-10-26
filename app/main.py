@@ -4,6 +4,7 @@ from auth.routers import auth
 from echohub.routers import blog
 from user.routers import user
 from echohub.routers import echohub
+from echohub.routers import notification
 from admin_panel.routes import admin
 from starlette.middleware.sessions import SessionMiddleware
 from core.config import settings
@@ -32,6 +33,7 @@ app.include_router(auth.router, tags=["Auth"])
 app.include_router(echohub.router)
 app.include_router(user.router)
 app.include_router(blog.router)
+app.include_router(notification.router)
 app.include_router(admin.router)
 
 

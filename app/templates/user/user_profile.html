@@ -71,15 +71,15 @@ EchoHub | Profile
                     <span>Posts</span>
                 </div>
 
-                <div>
-                    <strong>152</strong>
+                <a href="/profile/{{ user.username }}/followers">
+                    <strong>{{ follower_count }}</strong>
                     <span>Followers</span>
-                </div>
+                </a>
 
-                <div>
-                    <strong>98</strong>
+                <a href="/profile/{{ user.username }}/following">
+                    <strong>{{ following_count }}</strong>
                     <span>Following</span>
-                </div>
+                </a>
 
             </div>
 
