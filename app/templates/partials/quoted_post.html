@@ -1,0 +1,11 @@
+{# expects `quoted`: the post a quote post points at #}
+<a href="/post/{{ quoted.id }}" class="quoted-post">
+    <div class="quoted-post-author">
+        <strong>{{ quoted.user.full_name or quoted.user.username }}</strong>
+        <small>@{{ quoted.user.username }} · {{ quoted.published_at.strftime("%d %b %Y") }}</small>
+    </div>
+    <p class="quoted-post-text">{{ quoted.content|truncate(280) }}</p>
+    {% if quoted.image %}
+    <img src="{{ media_url(quoted.image) }}" class="quoted-post-media" alt="Quoted post image">
+    {% endif %}
+</a>

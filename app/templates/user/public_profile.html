@@ -37,13 +37,46 @@ EchoHub | {{ profile_user.full_name or profile_user.username }}
 
                     <p class="text-body-secondary mb-2">
                         @{{ profile_user.username }}
+                        {% if profile_user.is_private %}
+                        <i class="bi bi-lock-fill ms-1" title="Private account" aria-label="Private account"></i>
+                        {% endif %}
                     </p>
                 </div>
 
                 {% if current_user %}
-                {% with target_id=profile_user.id, following=is_following %}
-                {% include "partials/follow_button.html" %}
-                {% endwith %}
+                <div class="profile-actions">
+                    {% if not is_blocked %}
+                    {% with target_id=profile_user.id, following=is_following, requested=is_requested %}
+                    {% include "partials/follow_button.html" %}
+                    {% endwith %}
+                    {% endif %}
+
+                    <div class="dropdown">
+                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill"
+                            data-bs-toggle="dropdown" aria-expanded="false" aria-label="More options">
+                            <i class="bi bi-three-dots"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <form action="/user/{{ profile_user.id }}/mute" method="POST">
+                                    <button type="submit" class="dropdown-item">
+                                        <i class="bi {{ 'bi-volume-up' if is_muted else 'bi-volume-mute' }} me-2"></i>
+                                        {{ "Unmute" if is_muted else "Mute" }} @{{ profile_user.username }}
+                                    </button>
+                                </form>
+                            </li>
+                            <li>
+                                <form action="/user/{{ profile_user.id }}/block" method="POST"
+                                    {% if not is_blocked %}onsubmit="return confirm('Block @{{ profile_user.username }}? You will unfollow each other.')"{% endif %}>
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="bi bi-slash-circle me-2"></i>
+                                        {{ "Unblock" if is_blocked else "Block" }} @{{ profile_user.username }}
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
                 {% else %}
                 <a href="/login" class="btn btn-primary rounded-pill px-4">Follow</a>
                 {% endif %}
@@ -84,6 +117,19 @@ EchoHub | {{ profile_user.full_name or profile_user.username }}
     </div>
 
     <section class="posts-container mt-4">
+        {% if is_blocked %}
+        <div class="empty-posts">
+            <i class="bi bi-slash-circle notification-empty-icon"></i>
+            <h5>You blocked @{{ profile_user.username }}</h5>
+            <p>Unblock them from the menu above to see their posts.</p>
+        </div>
+        {% elif not can_view %}
+        <div class="empty-posts">
+            <i class="bi bi-lock notification-empty-icon"></i>
+            <h5>This account is private</h5>
+            <p>Follow @{{ profile_user.username }} to see their posts.</p>
+        </div>
+        {% else %}
         {% for blog in blogs %}
         {% include "partials/post_card.html" %}
         {% else %}
@@ -92,6 +138,7 @@ EchoHub | {{ profile_user.full_name or profile_user.username }}
             <p>@{{ profile_user.username }} hasn't shared anything yet.</p>
         </div>
         {% endfor %}
+        {% endif %}
     </section>
 
     {% include "partials/pagination.html" %}

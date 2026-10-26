@@ -25,6 +25,8 @@ EchoHub | Create Blog
 
                         {% if is_edit %}
                             Edit Blog
+                        {% elif quoted %}
+                            Quote Post
                         {% else %}
                             Create Blog
                         {% endif %}
@@ -46,6 +48,10 @@ EchoHub | Create Blog
                         method="POST"
                         enctype="multipart/form-data">
 
+                        {% if quoted %}
+                        <input type="hidden" name="quote_of" value="{{ quoted.id }}">
+                        {% endif %}
+
                         <!-- Content -->
 
                         <div class="mb-4">
@@ -63,10 +69,17 @@ EchoHub | Create Blog
                                 required>{% if is_edit %}{{ blog.content }}{% endif %}</textarea>
 
                             <div class="form-text">
-                                Maximum 150 characters.
+                                Maximum 150 characters. Use #hashtags and @mentions.
                             </div>
 
                         </div>
+
+                        {% set quoted = quoted or (blog.repost_of if is_edit and blog else none) %}
+                        {% if quoted %}
+                        <div class="mb-4">
+                            {% include "partials/quoted_post.html" %}
+                        </div>
+                        {% endif %}
 
 
                         <!-- Current Image -->
@@ -183,6 +196,23 @@ EchoHub | Create Blog
                             </div>
 
                         </div>
+
+                        <!-- Schedule -->
+
+                        <div class="mb-4">
+
+                            <label for="scheduled-at" class="form-label fw-semibold">
+                                Schedule
+                            </label>
+
+                            <input type="datetime-local" id="scheduled-at" name="scheduled_at" class="form-control">
+                            <input type="hidden" name="tz_offset" class="tz-offset">
+
+                            <div class="form-text">
+                                Optional. Leave empty to post now.
+                            </div>
+
+                        </div>
                         {% endif %}
 
 
@@ -198,8 +228,22 @@ EchoHub | Create Blog
 
                             </a>
 
+                            {% if not is_edit %}
                             <button
                                 type="submit"
+                                name="action"
+                                value="draft"
+                                class="btn btn-outline-primary rounded-pill px-4">
+
+                                Save as draft
+
+                            </button>
+                            {% endif %}
+
+                            <button
+                                type="submit"
+                                name="action"
+                                value="publish"
                                 class="btn btn-primary rounded-pill px-4">
 
                                 <i class=" me-2"></i>

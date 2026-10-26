@@ -19,12 +19,16 @@ EchoHub | Notifications
 
     <div class="notification-item {% if notification.id in unread_ids %}unread{% endif %}">
 
+        {% set icons = {
+            NotificationType.COMMENT: "bi-chat-fill",
+            NotificationType.REPLY: "bi-reply-fill",
+            NotificationType.MENTION: "bi-at",
+            NotificationType.REPOST: "bi-repeat",
+            NotificationType.FOLLOW: "bi-person-plus-fill",
+            NotificationType.FOLLOW_REQUEST: "bi-person-lock",
+        } %}
         <div class="notification-type-icon {{ notification.type.value }}">
-            {% if notification.type == NotificationType.COMMENT %}
-            <i class="bi bi-chat-fill"></i>
-            {% else %}
-            <i class="bi bi-person-plus-fill"></i>
-            {% endif %}
+            <i class="bi {{ icons[notification.type] }}"></i>
         </div>
 
         <div class="notification-body">
@@ -44,36 +48,67 @@ EchoHub | Notifications
                 </small>
             </div>
 
-            {% if notification.type == NotificationType.COMMENT %}
-
-            <p class="notification-text">
-                <a href="/profile/{{ actor.username }}" class="notification-actor">
-                    {{ actor.full_name or actor.username }}</a>
-                commented on your post
-            </p>
-
-            <a href="/#post-{{ notification.blog_id }}" class="notification-preview">
-                {% if notification.comment %}
-                <span class="notification-comment">“{{ notification.comment.content|truncate(140) }}”</span>
-                {% endif %}
-                {% if notification.blog %}
-                <span class="notification-post">{{ notification.blog.content|truncate(80) }}</span>
-                {% endif %}
-            </a>
-
-            {% else %}
+            {% if notification.type in (NotificationType.FOLLOW, NotificationType.FOLLOW_REQUEST) %}
 
             <div class="notification-follow-row">
                 <p class="notification-text">
                     <a href="/profile/{{ actor.username }}" class="notification-actor">
                         {{ actor.full_name or actor.username }}</a>
+                    {% if notification.type == NotificationType.FOLLOW %}
                     started following you
+                    {% else %}
+                    wants to follow you
+                    {% endif %}
                 </p>
 
+                {% if notification.type == NotificationType.FOLLOW %}
                 {% with target_id=actor.id, following=(actor.id in followed_ids) %}
                 {% include "partials/follow_button.html" %}
                 {% endwith %}
+                {% elif notification.follow_request %}
+                <div class="follow-request-actions">
+                    <form action="/follow-requests/{{ notification.follow_request_id }}/approve" method="POST">
+                        <button type="submit" class="btn btn-sm btn-primary rounded-pill">Approve</button>
+                    </form>
+                    <form action="/follow-requests/{{ notification.follow_request_id }}/decline" method="POST">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill">Decline</button>
+                    </form>
+                </div>
+                {% endif %}
             </div>
+
+            {% else %}
+
+            {% set blog = notification.blog %}
+            <p class="notification-text">
+                <a href="/profile/{{ actor.username }}" class="notification-actor">
+                    {{ actor.full_name or actor.username }}</a>
+                {% if notification.type == NotificationType.COMMENT %}
+                commented on your post
+                {% elif notification.type == NotificationType.REPLY %}
+                replied to your comment
+                {% elif notification.type == NotificationType.MENTION %}
+                mentioned you in {{ "a comment" if notification.comment_id else "a post" }}
+                {% elif blog and blog.content %}
+                quoted your post
+                {% else %}
+                reposted your post
+                {% endif %}
+            </p>
+
+            {# a plain repost links to and previews the original post #}
+            {% set target = blog.repost_of if blog and blog.is_plain_repost else blog %}
+            <a href="/post/{{ target.id if target else notification.blog_id }}" class="notification-preview">
+                {% if notification.comment %}
+                <span class="notification-comment">“{{ notification.comment.content|truncate(140) }}”</span>
+                {% elif notification.type == NotificationType.REPOST and blog and blog.content %}
+                <span class="notification-comment">“{{ blog.content|truncate(140) }}”</span>
+                {% endif %}
+                {% if target %}
+                {% set preview = target.repost_of if notification.type == NotificationType.REPOST and target.repost_of else target %}
+                <span class="notification-post">{{ preview.content|truncate(80) }}</span>
+                {% endif %}
+            </a>
 
             {% endif %}
 
@@ -86,7 +121,7 @@ EchoHub | Notifications
     <div class="empty-posts">
         <i class="bi bi-bell notification-empty-icon"></i>
         <h5>Nothing to see here — yet</h5>
-        <p>When someone comments on your posts or follows you, you'll see it here.</p>
+        <p>When someone comments, replies, mentions you, reposts your posts or follows you, you'll see it here.</p>
     </div>
 
     {% endfor %}

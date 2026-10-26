@@ -1,42 +1,37 @@
 <aside class="right-sidebar">
 
+    <!-- Search -->
+
+    <form action="/search" method="GET" class="search-form" role="search">
+        <i class="bi bi-search"></i>
+        <input type="search" name="q" class="form-control" maxlength="100"
+            placeholder="Search EchoHub" aria-label="Search EchoHub">
+    </form>
+
     <!-- Trending -->
 
-    <section class="sidebar-card">
+    {% set trending = trending_tags() %}
+    <section class="sidebar-card mt-3">
 
         <h5 class="sidebar-title">
-            Trending
+            Trending this week
         </h5>
 
-        <div class="trend-item">
+        {% for name, post_count in trending %}
 
-            <small>Technology · Trending</small>
+        <a href="/tag/{{ name|urlencode }}" class="trend-item">
 
-            <h6>#FastAPI</h6>
+            <h6>#{{ name }}</h6>
 
-            <small>15.2K Posts</small>
+            <small>{{ post_count }} post{{ "s" if post_count != 1 }}</small>
 
-        </div>
+        </a>
 
-        <div class="trend-item">
+        {% else %}
 
-            <small>Programming</small>
+        <p class="trend-empty">No trending tags yet. Add a #hashtag to your post.</p>
 
-            <h6>#Python</h6>
-
-            <small>12.8K Posts</small>
-
-        </div>
-
-        <div class="trend-item">
-
-            <small>Web Development</small>
-
-            <h6>#JavaScript</h6>
-
-            <small>9.1K Posts</small>
-
-        </div>
+        {% endfor %}
 
     </section>
 

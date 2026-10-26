@@ -399,23 +399,28 @@ document.querySelectorAll(".comment-form").forEach(form => {
         e.preventDefault();
 
         const input = this.querySelector("input[name='content']");
+        const parentInput = this.querySelector("input[name='parent_id']");
         const submit = this.querySelector("button[type='submit']");
         const content = input.value.trim();
         if (!content) return;
 
+        const body = new URLSearchParams({ content });
+        if (parentInput && parentInput.value) body.append("parent_id", parentInput.value);
+
         submit.disabled = true;
         try {
-            const data = await postAction(
-                `/blog/${this.dataset.blogId}/comment`,
-                new URLSearchParams({ content })
-            );
+            const data = await postAction(`/blog/${this.dataset.blogId}/comment`, body);
             if (!data) return;
 
             // server-rendered partial, content is already escaped by Jinja
-            const list = this.closest(".post-comments").querySelector(".comment-list");
+            const section = this.closest(".post-comments");
+            const list = data.parent_id
+                ? section.querySelector(`.comment-item[data-comment-id="${data.parent_id}"] .reply-list`)
+                : section.querySelector(".comment-list");
             list.insertAdjacentHTML("beforeend", data.comment_html);
             updateCommentCount(this.closest(".post-card"), data.comment_count);
             input.value = "";
+            setReplyTarget(this, null);
         } catch (error) {
             alert(error.message);
         } finally {
@@ -424,14 +429,74 @@ document.querySelectorAll(".comment-form").forEach(form => {
     });
 });
 
-// a comment notification links to /#post-<id>; open that post's comments
-const linkedPost = window.location.hash.match(/^#post-\d+$/)
-    && document.querySelector(window.location.hash);
+// a /#post-<id> link opens that post's comments; the single post page always does
+const linkedPost = (window.location.hash.match(/^#post-\d+$/)
+    && document.querySelector(window.location.hash))
+    || document.querySelector(".post-detail .post-card");
 if (linkedPost) {
     const toggle = linkedPost.querySelector(".comment-toggle-btn");
     if (toggle && toggle.getAttribute("aria-expanded") !== "true") toggle.click();
-    linkedPost.scrollIntoView({ block: "start" });
+    if (window.location.hash) linkedPost.scrollIntoView({ block: "start" });
 }
+
+// replies are posted through the post's comment form with a parent_id
+function setReplyTarget(form, button) {
+    const parentInput = form.querySelector("input[name='parent_id']");
+    const indicator = form.querySelector(".replying-to");
+    if (!parentInput || !indicator) return;
+
+    parentInput.value = button ? button.dataset.parentId : "";
+    indicator.hidden = !button;
+    if (button) {
+        indicator.querySelector(".replying-to-name").textContent = `@${button.dataset.username}`;
+    }
+}
+
+document.addEventListener("click", function (e) {
+    const replyButton = e.target.closest(".comment-reply-btn");
+    if (replyButton) {
+        const form = replyButton.closest(".post-comments").querySelector(".comment-form");
+        if (!form) return;
+        setReplyTarget(form, replyButton);
+        const input = form.querySelector("input[name='content']");
+        const mention = `@${replyButton.dataset.username} `;
+        if (!input.value.startsWith(mention)) input.value = mention + input.value;
+        input.focus();
+        return;
+    }
+
+    const cancelButton = e.target.closest(".replying-to-cancel");
+    if (cancelButton) setReplyTarget(cancelButton.closest(".comment-form"), null);
+});
+
+// delegated so freshly added comments can be edited too
+document.addEventListener("click", async function (e) {
+    const button = e.target.closest(".comment-edit-btn");
+    if (!button) return;
+
+    const item = button.closest(".comment-item");
+    const text = item.querySelector(":scope > .comment-body > .comment-text");
+    const content = prompt("Edit your comment", text.dataset.raw);
+    if (content === null || !content.trim() || content.trim() === text.dataset.raw) return;
+
+    button.disabled = true;
+    try {
+        const data = await postAction(
+            `/comment/${button.dataset.commentId}/edit`,
+            new URLSearchParams({ content: content.trim() })
+        );
+        if (!data) return;
+
+        // textContent keeps it escaped; links come back on the next page load
+        text.textContent = data.content;
+        text.dataset.raw = data.content;
+        item.querySelector(":scope > .comment-body .comment-edited").hidden = !data.edited;
+    } catch (error) {
+        alert(error.message);
+    } finally {
+        button.disabled = false;
+    }
+});
 
 // delegated so freshly added comments can be deleted too
 document.addEventListener("click", async function (e) {
@@ -444,6 +509,7 @@ document.addEventListener("click", async function (e) {
         if (!data) return;
 
         const postCard = button.closest(".post-card");
+        // the closest item is the comment itself, so its replies go with it
         button.closest(".comment-item").remove();
         updateCommentCount(postCard, data.comment_count);
     } catch (error) {
@@ -466,11 +532,13 @@ document.querySelectorAll(".follow-btn").forEach(button => {
             if (!data) return;
 
             // keep every button for this user in sync (sidebar, profile, lists)
+            const active = data.following || data.requested;
             document.querySelectorAll(`.follow-btn[data-user-id="${userId}"]`).forEach(btn => {
                 btn.dataset.following = String(data.following);
-                btn.textContent = data.following ? "Following" : "Follow";
-                btn.classList.toggle("btn-primary", !data.following);
-                btn.classList.toggle("btn-outline-primary", data.following);
+                btn.dataset.requested = String(Boolean(data.requested));
+                btn.textContent = data.following ? "Following" : data.requested ? "Requested" : "Follow";
+                btn.classList.toggle("btn-primary", !active);
+                btn.classList.toggle("btn-outline-primary", active);
             });
 
             document.querySelectorAll(`[data-follower-count-for="${userId}"]`).forEach(el => {
@@ -485,9 +553,60 @@ document.querySelectorAll(".follow-btn").forEach(button => {
 });
 
 // ================================
-// Future JavaScript
+// Bookmarks & Reposts
 // ================================
 
-// Search
-// Notifications
-// Infinite Scroll
+document.querySelectorAll(".bookmark-btn").forEach(button => {
+    button.addEventListener("click", async function () {
+        this.disabled = true;
+        try {
+            const data = await postAction(`/blog/${this.dataset.blogId}/bookmark`);
+            if (!data) return;
+
+            document.querySelectorAll(`.bookmark-btn[data-blog-id="${this.dataset.blogId}"]`).forEach(btn => {
+                btn.setAttribute("aria-pressed", String(data.bookmarked));
+                btn.querySelector("i").className = data.bookmarked ? "bi bi-bookmark-fill" : "bi bi-bookmark";
+            });
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            this.disabled = false;
+        }
+    });
+});
+
+document.querySelectorAll(".repost-btn").forEach(button => {
+    button.addEventListener("click", async function () {
+        this.disabled = true;
+        try {
+            const data = await postAction(`/blog/${this.dataset.blogId}/repost`);
+            if (!data) return;
+
+            document.querySelectorAll(`.repost-btn[data-blog-id="${this.dataset.blogId}"]`).forEach(btn => {
+                btn.setAttribute("aria-pressed", String(data.reposted));
+                btn.classList.toggle("reposted", data.reposted);
+                btn.querySelector(".repost-count").textContent = data.repost_count;
+            });
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            this.disabled = false;
+        }
+    });
+});
+
+// ================================
+// Scheduling
+// ================================
+
+// the server stores UTC, so send the browser's offset with a scheduled time
+document.querySelectorAll(".tz-offset").forEach(input => {
+    input.value = new Date().getTimezoneOffset();
+});
+
+const scheduleInput = document.getElementById("scheduled-at");
+if (scheduleInput) {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    scheduleInput.min = now.toISOString().slice(0, 16);
+}

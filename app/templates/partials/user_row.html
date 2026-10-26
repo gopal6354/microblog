@@ -1,0 +1,26 @@
+{# expects `listed`, `current_user`, `followed_ids`, `requested_ids` #}
+<div class="follow-item">
+
+    <a href="/profile/{{ listed.username }}" class="follow-user">
+        <div class="avatar">
+            {% if listed.profile_image %}
+            <img src="{{ media_url(listed.profile_image) }}" alt="{{ listed.username }}"
+                class="avatar-img">
+            {% else %}
+            <i class="bi bi-person-fill"></i>
+            {% endif %}
+        </div>
+
+        <div>
+            <strong>{{ listed.full_name or listed.username }}</strong>
+            <small>@{{ listed.username }}</small>
+        </div>
+    </a>
+
+    {% if current_user and current_user.id != listed.id %}
+    {% with target_id=listed.id, following=(listed.id in followed_ids), requested=(listed.id in requested_ids) %}
+    {% include "partials/follow_button.html" %}
+    {% endwith %}
+    {% endif %}
+
+</div>

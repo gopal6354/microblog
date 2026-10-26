@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}
+EchoHub | Bookmarks
+{% endblock %}
+
+{% block content %}
+
+<header class="feed-header">
+    <div class="feed-title">
+        <h3>Bookmarks</h3>
+    </div>
+</header>
+
+<section class="posts-container">
+    {% for blog in blogs %}
+    {% include "partials/post_card.html" %}
+    {% else %}
+    <div class="empty-posts">
+        <i class="bi bi-bookmark notification-empty-icon"></i>
+        <h5>No bookmarks yet</h5>
+        <p>Tap the bookmark icon on any post to save it here.</p>
+    </div>
+    {% endfor %}
+</section>
+
+{% include "partials/pagination.html" %}
+
+{% include "partials/report_modal.html" %}
+
+{% endblock %}

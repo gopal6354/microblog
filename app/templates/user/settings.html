@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}
+EchoHub | Settings
+{% endblock %}
+
+{% block content %}
+
+<header class="feed-header">
+    <div class="feed-title">
+        <h3>Settings</h3>
+    </div>
+</header>
+
+<div class="settings-page">
+
+    <!-- Privacy -->
+    <section class="settings-card">
+        <h5>Privacy</h5>
+
+        <form action="/settings/privacy" method="POST">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="is-private"
+                    name="is_private" value="true" {% if user.is_private %}checked{% endif %}
+                    onchange="this.form.submit()">
+                <label class="form-check-label" for="is-private">Private account</label>
+            </div>
+            <p class="settings-hint">
+                Only approved followers can see your posts and follower lists.
+                Making your account public approves any pending follow requests.
+            </p>
+            <noscript><button type="submit" class="btn btn-sm btn-primary rounded-pill">Save</button></noscript>
+        </form>
+    </section>
+
+    <!-- Password -->
+    <section class="settings-card">
+        <h5>Change password</h5>
+
+        <form action="/settings/password" method="POST">
+            <div class="mb-3">
+                <label for="current-password" class="form-label">Current password</label>
+                <input type="password" id="current-password" name="current_password" class="form-control"
+                    autocomplete="current-password" required>
+            </div>
+            <div class="mb-3">
+                <label for="new-password" class="form-label">New password</label>
+                <input type="password" id="new-password" name="new_password" class="form-control"
+                    minlength="{{ min_password_length }}" autocomplete="new-password" required>
+            </div>
+            <div class="mb-3">
+                <label for="confirm-password" class="form-label">Confirm new password</label>
+                <input type="password" id="confirm-password" name="confirm_password" class="form-control"
+                    minlength="{{ min_password_length }}" autocomplete="new-password" required>
+            </div>
+            <p class="settings-hint">Changing your password signs you out on every other device.</p>
+            <button type="submit" class="btn btn-primary rounded-pill px-4">Update password</button>
+        </form>
+    </section>
+
+    <!-- Blocked & muted -->
+    {% for title, users, action, verb, empty in [
+        ("Blocked accounts", blocked_users, "block", "Unblock", "You haven't blocked anyone."),
+        ("Muted accounts", muted_users, "mute", "Unmute", "You haven't muted anyone."),
+    ] %}
+    <section class="settings-card">
+        <h5>{{ title }}</h5>
+
+        {% for listed in users %}
+        <div class="follow-item">
+            <a href="/profile/{{ listed.username }}" class="follow-user">
+                <div class="avatar">
+                    {% if listed.profile_image %}
+                    <img src="{{ media_url(listed.profile_image) }}" alt="{{ listed.username }}" class="avatar-img">
+                    {% else %}
+                    <i class="bi bi-person-fill"></i>
+                    {% endif %}
+                </div>
+                <div>
+                    <strong>{{ listed.full_name or listed.username }}</strong>
+                    <small>@{{ listed.username }}</small>
+                </div>
+            </a>
+
+            <form action="/user/{{ listed.id }}/{{ action }}" method="POST" class="m-0">
+                <input type="hidden" name="next" value="/settings">
+                <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill">{{ verb }}</button>
+            </form>
+        </div>
+        {% else %}
+        <p class="settings-hint">{{ empty }}</p>
+        {% endfor %}
+    </section>
+    {% endfor %}
+
+</div>
+
+{% endblock %}

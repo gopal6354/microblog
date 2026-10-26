@@ -6,7 +6,7 @@ from core.config import templates
 from database import get_db
 from dependencies.auth import require_normal_user
 from echohub.services.notification_service import visible_notifications_query
-from models import Follow, Notification, User
+from models import Blog, Follow, Notification, User
 from models.notification import NotificationType
 from utils.pagination import paginate
 
@@ -27,8 +27,9 @@ def notifications_page(
         visible_notifications_query(current_user.id)
         .options(
             selectinload(Notification.actor),
-            selectinload(Notification.blog),
+            selectinload(Notification.blog).selectinload(Blog.repost_of),
             selectinload(Notification.comment),
+            selectinload(Notification.follow_request),
         )
         .order_by(Notification.created_at.desc(), Notification.id.desc()),
         page,
