@@ -1,7 +1,7 @@
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy import select, func
+from sqlalchemy.orm import Session, selectinload
 from models.blogs import Blog
-from models.user import User
+from models.user import User, RoleChoice
 from models.report import ReportStatus, Report
 from models.activation_request import AccountActivation, ActivationRequestStatus
 
@@ -74,3 +74,83 @@ def activation_status_update(
         return True, "Activation request rejected."
 
     return False, "Invalid status."
+
+
+def get_dashboard_stats(session: Session):
+    return {
+        "total_users": session.scalar(
+            select(func.count())
+            .select_from(User)
+            .where(User.role != RoleChoice.SUPER_ADMIN)
+        ),
+        "total_blogs": session.scalar(select(func.count()).select_from(Blog)),
+        "pending_reports": session.scalar(
+            select(func.count())
+            .select_from(Report)
+            .where(Report.status == ReportStatus.PENDING)
+        ),
+        "pending_activation_requests": session.scalar(
+            select(func.count())
+            .select_from(AccountActivation)
+            .where(AccountActivation.status == ActivationRequestStatus.PENDING)
+        ),
+    }
+
+
+def get_recent_activity(session: Session, limit: int = 10):
+    activities = []
+
+    users = session.scalars(
+        select(User)
+        .where(User.role != RoleChoice.SUPER_ADMIN)
+        .order_by(User.created_at.desc())
+        .limit(limit)
+    ).all()
+    activities += [
+        {"user": user, "action": "Joined EchoHub", "date": user.created_at}
+        for user in users
+    ]
+
+    blogs = session.scalars(
+        select(Blog)
+        .options(selectinload(Blog.user))
+        .order_by(Blog.created_at.desc())
+        .limit(limit)
+    ).all()
+    activities += [
+        {"user": blog.user, "action": "Created a new blog", "date": blog.created_at}
+        for blog in blogs
+    ]
+
+    reports = session.scalars(
+        select(Report)
+        .options(selectinload(Report.reporter))
+        .order_by(Report.created_at.desc())
+        .limit(limit)
+    ).all()
+    activities += [
+        {
+            "user": report.reporter,
+            "action": "Reported a blog",
+            "date": report.created_at,
+        }
+        for report in reports
+    ]
+
+    activation_requests = session.scalars(
+        select(AccountActivation)
+        .options(selectinload(AccountActivation.user))
+        .order_by(AccountActivation.created_at.desc())
+        .limit(limit)
+    ).all()
+    activities += [
+        {
+            "user": activation.user,
+            "action": "Requested activation",
+            "date": activation.created_at,
+        }
+        for activation in activation_requests
+    ]
+
+    activities.sort(key=lambda activity: activity["date"], reverse=True)
+    return activities[:limit]

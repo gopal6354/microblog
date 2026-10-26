@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Depends, status, File, UploadFile, Form
+from fastapi import APIRouter, Request, Depends, status, File, UploadFile, Form, Query
 from core.config import templates
 from dependencies.auth import require_normal_user, require_normal_user_api
 from models.user import User
@@ -25,11 +25,15 @@ from utils.file_upload import (
     FileUploadError,
 )
 from utils.flash import flash
+from utils.pagination import paginate
 
 router = APIRouter()
 
 # max lengths match the User model columns
 PROFILE_FIELD_LIMITS = {"username": 50, "full_name": 50, "bio": 150}
+
+POSTS_PAGE_SIZE = 10
+FOLLOW_PAGE_SIZE = 20
 
 
 @router.get("/user-profile")
@@ -122,15 +126,20 @@ def edit_user_profile(
 def user_blogs(
     request: Request,
     tab: str = "posts",
+    page: int = Query(1, ge=1),
     session: Session = Depends(get_db),
     current_user: User = Depends(require_normal_user),
 ):
-    blogs = session.scalars(
+    pagination = paginate(
+        session,
         select(Blog)
         .where(Blog.user_id == current_user.id, Blog.is_hidden.is_(False))
-        .order_by(Blog.created_at.desc())
-    ).all()
-    post_count = len(blogs)
+        .order_by(Blog.created_at.desc(), Blog.id.desc()),
+        page,
+        POSTS_PAGE_SIZE,
+    )
+    blogs = pagination.items
+    post_count = pagination.total
     follower_count, following_count = follow_counts(session, current_user.id)
     return templates.TemplateResponse(
         request=request,
@@ -138,6 +147,7 @@ def user_blogs(
         context={
             "user": current_user,
             "blogs": blogs,
+            "pagination": pagination,
             "post_count": post_count,
             "follower_count": follower_count,
             "following_count": following_count,
@@ -283,6 +293,7 @@ def get_visible_profile(session: Session, username: str):
 def public_profile(
     request: Request,
     username: str,
+    page: int = Query(1, ge=1),
     session: Session = Depends(get_db),
 ):
     current_user = request.state.user
@@ -295,7 +306,8 @@ def public_profile(
     if current_user and current_user.id == profile_user.id:
         return RedirectResponse(url="/user-blogs", status_code=303)
 
-    blogs = session.scalars(
+    pagination = paginate(
+        session,
         select(Blog)
         .options(
             selectinload(Blog.user),
@@ -303,8 +315,11 @@ def public_profile(
             selectinload(Blog.comments).selectinload(Comment.user),
         )
         .where(Blog.user_id == profile_user.id, Blog.is_hidden.is_(False))
-        .order_by(Blog.created_at.desc())
-    ).all()
+        .order_by(Blog.created_at.desc(), Blog.id.desc()),
+        page,
+        POSTS_PAGE_SIZE,
+    )
+    blogs = pagination.items
     annotate_blogs(blogs, current_user)
     follower_count, following_count = follow_counts(session, profile_user.id)
 
@@ -315,7 +330,8 @@ def public_profile(
             "profile_user": profile_user,
             "current_user": current_user,
             "blogs": blogs,
-            "post_count": len(blogs),
+            "pagination": pagination,
+            "post_count": pagination.total,
             "follower_count": follower_count,
             "following_count": following_count,
             "is_following": is_following(session, current_user, profile_user.id),
@@ -329,6 +345,7 @@ def follow_list(
     request: Request,
     username: str,
     relation: str,
+    page: int = Query(1, ge=1),
     session: Session = Depends(get_db),
 ):
     if relation not in ("followers", "following"):
@@ -351,9 +368,14 @@ def follow_list(
             .join(Follow, Follow.followed_id == User.id)
             .where(Follow.follower_id == profile_user.id)
         )
-    users = session.scalars(
-        query.where(User.is_deleted.is_(False)).order_by(Follow.created_at.desc())
-    ).all()
+    pagination = paginate(
+        session,
+        query.where(User.is_deleted.is_(False)).order_by(
+            Follow.created_at.desc(), Follow.id.desc()
+        ),
+        page,
+        FOLLOW_PAGE_SIZE,
+    )
 
     current_user = request.state.user
     followed_ids = set()
@@ -370,7 +392,8 @@ def follow_list(
         context={
             "profile_user": profile_user,
             "relation": relation,
-            "users": users,
+            "users": pagination.items,
+            "pagination": pagination,
             "current_user": current_user,
             "followed_ids": followed_ids,
             "flash": request.session.pop("_flash", None),

@@ -5,13 +5,13 @@ from dependencies.auth import require_super_admin
 from models.user import RoleChoice
 from models import Blog, User, Report
 from models.report import ReportStatus
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 from database import get_db
-import math
 from models.activation_request import ActivationRequestStatus, AccountActivation
 from utils.flash import flash
 from utils.file_upload import delete_file
+from utils.pagination import paginate
 from admin_panel.services.admin_service import (
     is_blog_exist,
     update_report_status,
@@ -20,41 +20,55 @@ from admin_panel.services.admin_service import (
     restore_user,
     is_activation_request_exist,
     activation_status_update,
+    get_dashboard_stats,
+    get_recent_activity,
 )
 
 
 router = APIRouter()
 
+ADMIN_PAGE_SIZE = 10
+
 
 # admin dashboard page
 @router.get("/admin-dashboard")
 def admin_dashboard_page(
-    request: Request, current_user: User = Depends(require_super_admin)
+    request: Request,
+    current_user: User = Depends(require_super_admin),
+    session: Session = Depends(get_db),
 ):
     return templates.TemplateResponse(
         request=request,
         name="admin/dashboard.html",
-        context={"flash": request.session.pop("_flash", None)},
+        context={
+            "flash": request.session.pop("_flash", None),
+            "stats": get_dashboard_stats(session),
+            "recent_activity": get_recent_activity(session),
+        },
     )
 
 
 # admin users page
 @router.get("/admin/users")
 def admin_users_page(
-    requst: Request,
+    request: Request,
+    page: int = Query(1, ge=1),
     current_user: User = Depends(require_super_admin),
     session: Session = Depends(get_db),
 ):
-    all_users = session.scalars(
+    pagination = paginate(
+        session,
         select(User)
         .where(User.role != RoleChoice.SUPER_ADMIN)
-        .order_by(User.is_deleted.asc(), User.created_at.desc())
-    ).all()
+        .order_by(User.is_deleted.asc(), User.created_at.desc(), User.id.desc()),
+        page,
+        ADMIN_PAGE_SIZE,
+    )
 
     return templates.TemplateResponse(
-        request=requst,
+        request=request,
         name="admin/components/users.html",
-        context={"all_user": all_users},
+        context={"all_user": pagination.items, "pagination": pagination},
     )
 
 
@@ -174,24 +188,19 @@ def admin_blogs_page(
     current_user: User = Depends(require_super_admin),
     session: Session = Depends(get_db),
 ):
-    per_page = 10
-    offset = (page - 1) * per_page
-
-    blogs = session.scalars(
+    pagination = paginate(
+        session,
         select(Blog)
         .options(selectinload(Blog.user), selectinload(Blog.likes))
-        .order_by(Blog.created_at.desc())
-        .limit(per_page)
-        .offset(offset)
-    ).all()
-
-    total_blogs = session.scalar(select(func.count()).select_from(Blog))
-    total_pages = max(1, math.ceil(total_blogs / per_page))
+        .order_by(Blog.created_at.desc(), Blog.id.desc()),
+        page,
+        ADMIN_PAGE_SIZE,
+    )
 
     return templates.TemplateResponse(
         request=request,
         name="admin/components/blogs.html",
-        context={"blogs": blogs, "page": page, "total_pages": total_pages},
+        context={"blogs": pagination.items, "pagination": pagination},
     )
 
 
@@ -290,19 +299,23 @@ def delete_blog(
 @router.get("/admin/reports")
 def admin_reports_page(
     request: Request,
+    page: int = Query(1, ge=1),
     session: Session = Depends(get_db),
     current_user: User = Depends(require_super_admin),
 ):
-    reports_blogs = session.scalars(
+    pagination = paginate(
+        session,
         select(Blog)
         .options(selectinload(Blog.user), selectinload(Blog.reports))
         .where(Blog.reports.any())
-        .order_by(Blog.created_at.desc())
-    ).all()
+        .order_by(Blog.created_at.desc(), Blog.id.desc()),
+        page,
+        ADMIN_PAGE_SIZE,
+    )
     return templates.TemplateResponse(
         request=request,
         name="admin/components/reports.html",
-        context={"reported_blogs": reports_blogs},
+        context={"reported_blogs": pagination.items, "pagination": pagination},
     )
 
 
@@ -373,18 +386,25 @@ def admin_update_report_status(
 @router.get("/admin/activation-requests")
 def admin_activation_request_page(
     request: Request,
+    page: int = Query(1, ge=1),
     current_user: User = Depends(require_super_admin),
     session: Session = Depends(get_db),
 ):
-    activation_request = session.scalars(
-        select(AccountActivation).options(selectinload(AccountActivation.user))
-    ).all()
+    pagination = paginate(
+        session,
+        select(AccountActivation)
+        .options(selectinload(AccountActivation.user))
+        .order_by(AccountActivation.created_at.desc(), AccountActivation.id.desc()),
+        page,
+        ADMIN_PAGE_SIZE,
+    )
 
     return templates.TemplateResponse(
         request=request,
         name="admin/components/activation_request.html",
         context={
-            "activation_requests": activation_request,
+            "activation_requests": pagination.items,
+            "pagination": pagination,
             "ActivationRequestStatus": ActivationRequestStatus,
         },
     )

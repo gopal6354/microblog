@@ -69,7 +69,7 @@ Dashboard | EchoHub Admin
 
 
                 <h2>
-                    250
+                    {{ stats.total_users }}
                 </h2>
 
 
@@ -109,7 +109,7 @@ Dashboard | EchoHub Admin
 
 
                 <h2>
-                    560
+                    {{ stats.total_blogs }}
                 </h2>
 
 
@@ -150,7 +150,7 @@ Dashboard | EchoHub Admin
 
 
                 <h2>
-                    25
+                    {{ stats.pending_reports }}
                 </h2>
 
 
@@ -191,7 +191,7 @@ Dashboard | EchoHub Admin
 
 
                 <h2>
-                    12
+                    {{ stats.pending_activation_requests }}
                 </h2>
 
 
@@ -261,57 +261,35 @@ Dashboard | EchoHub Admin
             <tbody>
 
 
-                <tr>
-
-                    <td>
-                        Gopal
-                    </td>
-
-                    <td>
-                        Created a new blog
-                    </td>
-
-                    <td>
-                        21 July 2026
-                    </td>
-
-                </tr>
-
-
+                {% for activity in recent_activity %}
 
                 <tr>
 
                     <td>
-                        Rahul
+                        {{ activity.user.full_name or activity.user.username }}
                     </td>
 
                     <td>
-                        Reported a blog
+                        {{ activity.action }}
                     </td>
 
                     <td>
-                        20 July 2026
+                        {{ activity.date.strftime("%d %B %Y") }}
                     </td>
 
                 </tr>
 
-
+                {% else %}
 
                 <tr>
 
-                    <td>
-                        Amit
-                    </td>
-
-                    <td>
-                        Requested activation
-                    </td>
-
-                    <td>
-                        19 July 2026
+                    <td colspan="3" class="text-center text-muted">
+                        No recent activity
                     </td>
 
                 </tr>
+
+                {% endfor %}
 
 
             </tbody>

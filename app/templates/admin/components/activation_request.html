@@ -137,7 +137,7 @@ Activation Requests | EchoHub Admin
 
 
                         <td>
-                            1
+                            {{ activation.id }}
                         </td>
 
 
@@ -243,5 +243,7 @@ Activation Requests | EchoHub Admin
 
 
 
+
+{% include "partials/pagination.html" %}
 
 {% endblock %}

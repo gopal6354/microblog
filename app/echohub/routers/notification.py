@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, Query
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session, selectinload
 
@@ -8,6 +8,7 @@ from dependencies.auth import require_normal_user
 from echohub.services.notification_service import visible_notifications_query
 from models import Follow, Notification, User
 from models.notification import NotificationType
+from utils.pagination import paginate
 
 router = APIRouter()
 
@@ -17,19 +18,23 @@ NOTIFICATION_PAGE_SIZE = 50
 @router.get("/notifications")
 def notifications_page(
     request: Request,
+    page: int = Query(1, ge=1),
     session: Session = Depends(get_db),
     current_user: User = Depends(require_normal_user),
 ):
-    notifications = session.scalars(
+    pagination = paginate(
+        session,
         visible_notifications_query(current_user.id)
         .options(
             selectinload(Notification.actor),
             selectinload(Notification.blog),
             selectinload(Notification.comment),
         )
-        .order_by(Notification.created_at.desc())
-        .limit(NOTIFICATION_PAGE_SIZE)
-    ).all()
+        .order_by(Notification.created_at.desc(), Notification.id.desc()),
+        page,
+        NOTIFICATION_PAGE_SIZE,
+    )
+    notifications = pagination.items
 
     # remember what was new before marking everything read, for highlighting
     unread_ids = {n.id for n in notifications if not n.is_read}
@@ -56,6 +61,7 @@ def notifications_page(
         name="/notifications/notifications.html",
         context={
             "notifications": notifications,
+            "pagination": pagination,
             "unread_ids": unread_ids,
             "followed_ids": followed_ids,
             "current_user": current_user,
