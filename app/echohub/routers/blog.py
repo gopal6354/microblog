@@ -17,6 +17,8 @@ from echohub.services.post_service import (
 router = APIRouter()
 
 
+# Shows the create-post form.
+# The same template is reused for editing with is_edit=True.
 @router.get("/create-blog")
 def create_blog_page(
     request: Request,
@@ -35,6 +37,8 @@ def create_blog_page(
     )
 
 
+# Creates a new post, or saves it as a draft when action=draft.
+# Accepts either an image or a video, saves hashtags and notifies mentioned users.
 @router.post("/create-blog")
 async def create_blog(
     request: Request,
@@ -113,6 +117,8 @@ async def create_blog(
     )
 
 
+# JSON API: updates the location on one of the user's own posts.
+# Returns 404/403/400 for a missing post, someone else's post or a bad location.
 @router.post("/blog/{blog_id}/location")
 def update_blog_location(
     blog_id: int,

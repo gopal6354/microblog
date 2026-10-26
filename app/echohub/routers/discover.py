@@ -44,6 +44,8 @@ def followed_ids(session: Session, user: User | None):
     )
 
 
+# Searches posts or people (tab=people) by text.
+# A query that is just a #hashtag redirects straight to that tag's page.
 @router.get("/search")
 def search(
     request: Request,
@@ -109,6 +111,8 @@ def search(
     )
 
 
+# Lists visible posts that use a given hashtag, paginated.
+# Shows an empty list if the tag doesn't exist.
 @router.get("/tag/{name}")
 def tag_page(
     request: Request,
@@ -140,6 +144,8 @@ def tag_page(
     )
 
 
+# Lists the posts the logged-in user has bookmarked.
+# Most recently bookmarked first, paginated.
 @router.get("/bookmarks")
 def bookmarks_page(
     request: Request,

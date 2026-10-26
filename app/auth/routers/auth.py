@@ -32,7 +32,8 @@ router = APIRouter()
 MIN_PASSWORD_LENGTH = 8
 
 
-# register page
+# Shows the sign-up form.
+# Pops any pending flash message so errors from a failed signup are displayed.
 @router.get("/register")
 def regiter_page(request: Request):
     return templates.TemplateResponse(
@@ -42,7 +43,8 @@ def regiter_page(request: Request):
     )
 
 
-# register page
+# Validates the signup form, creates the user and emails a verification OTP.
+# Redirects to /verify-otp on success, or back to /register with an error.
 @router.post("/register")
 def regiter_user(
     request: Request,
@@ -109,7 +111,8 @@ def regiter_user(
     return RedirectResponse(url="/verify-otp", status_code=status.HTTP_303_SEE_OTHER)
 
 
-# login page
+# Shows the sign-in form.
+# Also shows the activation-request option when a blocked user just tried to sign in.
 @router.get("/login")
 def login_page(request: Request):
     return templates.TemplateResponse(
@@ -124,7 +127,8 @@ def login_page(request: Request):
     )
 
 
-# login page
+# Checks the username/email and password and sets the access-token cookie.
+# Blocked users get an activation prompt, unverified users are sent to OTP verification.
 @router.post("/login")
 def login_user(
     request: Request,
@@ -192,7 +196,8 @@ def login_user(
     return response
 
 
-# otp verify page
+# Shows the email verification OTP form.
+# Only reachable during the signup verification flow, otherwise redirects to /register.
 @router.get("/verify-otp")
 def verify_otp_page(request: Request):
     if request.session.get("otp_flow") != "verification" or not request.session.get(
@@ -208,7 +213,8 @@ def verify_otp_page(request: Request):
     )
 
 
-# otp verify page
+# Checks the verification OTP and marks the account verified and active.
+# Wrong attempts are counted, and an expired OTP must be resent.
 @router.post("/verify-otp")
 def verify_otp(
     request: Request, otp: str = Form(...), session: Session = Depends(get_db)
@@ -290,6 +296,8 @@ def verify_otp(
     return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
 
 
+# Shows the forgot-password form where the user enters their email.
+# Submitting it starts the password reset OTP flow.
 @router.get("/forget-password")
 def forget_password_page(request: Request):
     return templates.TemplateResponse(
@@ -299,6 +307,8 @@ def forget_password_page(request: Request):
     )
 
 
+# Starts a password reset and emails a reset OTP if the account exists.
+# Responds the same way for unknown emails to avoid account enumeration.
 @router.post("/forget-password")
 def forget_password(
     request: Request,
@@ -336,6 +346,8 @@ def forget_password(
     )
 
 
+# Shows the password reset OTP form.
+# Only reachable after requesting a reset, otherwise redirects to /forget-password.
 @router.get("/verify-reset-otp")
 def verify_reset_otp_page(request: Request):
     if request.session.get("otp_flow") != "reset_password" or not request.session.get(
@@ -358,6 +370,8 @@ def verify_reset_otp_page(request: Request):
     )
 
 
+# Checks the reset OTP and marks this email as verified in the session.
+# On success the user can open /reset-password to choose a new password.
 @router.post("/verify-reset-otp")
 def verify_reset_otp(
     request: Request,
@@ -447,6 +461,8 @@ def verify_reset_otp(
     )
 
 
+# Shows the new-password form.
+# Only allowed once the reset OTP for the same email has been verified.
 @router.get("/reset-password")
 def reset_password_page(request: Request):
     if request.session.get("otp_flow") != "reset_password" or request.session.get(
@@ -470,6 +486,8 @@ def reset_password_page(request: Request):
     )
 
 
+# Validates and saves the new password, then clears the reset session.
+# Bumps token_version so every existing login session is signed out.
 @router.post("/reset-password")
 def reset_password(
     request: Request,
@@ -547,6 +565,8 @@ def reset_password(
     return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
 
 
+# Sends a fresh OTP for the current flow (verification or password reset).
+# Redirects back to the matching OTP form.
 @router.post("/resend-otp")
 def resend_otp(
     request: Request,
@@ -624,7 +644,8 @@ def resend_otp(
     )
 
 
-# logout
+# Signs the user out by deleting the access-token cookie.
+# Also clears any leftover OTP/reset session data.
 @router.get("/logout")
 def logout(request: Request):
     request.session.pop("otp_email", None)
@@ -642,6 +663,8 @@ def logout(request: Request):
     return response
 
 
+# Shows the form a blocked user uses to ask the admin to reactivate their account.
+# The user is identified from the session set during the blocked login attempt.
 @router.get("/account-activation-request")
 def account_activation_page(request: Request):
     return templates.TemplateResponse(
@@ -649,6 +672,8 @@ def account_activation_page(request: Request):
     )
 
 
+# Saves a pending account activation request for the admin to review.
+# Rejects the request if the user already has one pending.
 @router.post("/account-activation-request")
 def account_activation(
     request: Request, message: str = Form(...), session: Session = Depends(get_db)

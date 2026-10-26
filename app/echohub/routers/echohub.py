@@ -48,6 +48,8 @@ def error_response(message: str, status_code: int):
     return JSONResponse({"success": False, "message": message}, status_code=status_code)
 
 
+# Home feed: 'for-you' shows all visible posts.
+# 'following' shows only your own posts and those of people you follow.
 @router.get("/")
 def blogs(
     request: Request,
@@ -87,6 +89,8 @@ def blogs(
     )
 
 
+# Shows a single post with its comments.
+# Redirects home if the post is hidden, private or blocked for this viewer.
 @router.get("/post/{blog_id}")
 def post_detail(request: Request, blog_id: int, session: Session = Depends(get_db)):
     current_user = request.state.user
@@ -112,6 +116,8 @@ def post_detail(request: Request, blog_id: int, session: Session = Depends(get_d
     )
 
 
+# JSON API: toggles a like on a post.
+# Returns the new liked state and the updated like count.
 @router.post("/blog/{blog_id}/like")
 def like_blog(
     blog_id: int,
@@ -155,6 +161,8 @@ def like_blog(
     return JSONResponse({"success": True, "liked": liked, "like_count": like_count})
 
 
+# JSON API: adds a comment or a reply (parent_id) to a post.
+# Notifies the owner, parent commenter and mentions; returns the rendered comment HTML.
 @router.post("/blog/{blog_id}/comment")
 def add_comment(
     blog_id: int,
@@ -218,6 +226,8 @@ def add_comment(
     )
 
 
+# JSON API: edits the text of the user's own comment.
+# Sets updated_at so the comment shows as edited.
 @router.post("/comment/{comment_id}/edit")
 def edit_comment(
     comment_id: int,
@@ -250,6 +260,8 @@ def edit_comment(
     )
 
 
+# JSON API: deletes the user's own comment.
+# Returns the post's updated comment count.
 @router.post("/comment/{comment_id}/delete")
 def delete_comment(
     comment_id: int,
@@ -278,6 +290,8 @@ def delete_comment(
     )
 
 
+# JSON API: toggles a bookmark on a post.
+# Returns the new bookmarked state.
 @router.post("/blog/{blog_id}/bookmark")
 def toggle_bookmark(
     blog_id: int,
@@ -323,6 +337,8 @@ def repost_target(session: Session, current_user: User, blog_id: int):
     return blog, None
 
 
+# JSON API: toggles a plain repost of a post.
+# You can't repost your own posts or posts from private accounts.
 @router.post("/blog/{blog_id}/repost")
 def toggle_repost(
     blog_id: int,
@@ -362,6 +378,8 @@ def toggle_repost(
     )
 
 
+# Saves a user's report about a post (reason and optional description).
+# Each user can report a post only once, and not their own posts.
 @router.post("/report/blog")
 def report_blog(
     request: Request,

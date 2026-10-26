@@ -15,6 +15,8 @@ router = APIRouter()
 NOTIFICATION_PAGE_SIZE = 50
 
 
+# Shows the logged-in user's notifications, paginated.
+# Marks them all as read but highlights the ones that were unread.
 @router.get("/notifications")
 def notifications_page(
     request: Request,

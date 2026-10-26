@@ -30,7 +30,8 @@ router = APIRouter()
 ADMIN_PAGE_SIZE = 10
 
 
-# admin dashboard page
+# Shows the admin dashboard (super admin only).
+# Displays site-wide stats and recent activity.
 @router.get("/admin-dashboard")
 def admin_dashboard_page(
     request: Request,
@@ -48,7 +49,8 @@ def admin_dashboard_page(
     )
 
 
-# admin users page
+# Lists all non-admin users for the admin, paginated.
+# Active users first, newest first.
 @router.get("/admin/users")
 def admin_users_page(
     request: Request,
@@ -72,7 +74,8 @@ def admin_users_page(
     )
 
 
-# soft delete user
+# Suspends a user (soft delete) and signs them out of every session.
+# All their posts are hidden too; super admins can't be suspended.
 @router.post("/admin/users/{user_id}/lock")
 def suspend_user(
     user_id: int,
@@ -114,7 +117,8 @@ def suspend_user(
     )
 
 
-# soft delete user restore
+# Restores a suspended (soft-deleted) user.
+# The user can sign in again afterwards.
 @router.post("/admin/users/{user_id}/restore")
 def admin_restore_user(
     request: Request,
@@ -139,7 +143,8 @@ def admin_restore_user(
     )
 
 
-# hard delete user
+# Permanently deletes a user and everything linked to them.
+# Also deletes their profile image and the media of all their posts.
 @router.post("/admin/users/{user_id}/delete")
 def delete_user(
     user_id: int,
@@ -180,7 +185,8 @@ def delete_user(
     )
 
 
-# admin blogs page
+# Lists all posts for the admin, paginated.
+# Loads each post's author and likes for display.
 @router.get("/admin/blogs")
 def admin_blogs_page(
     request: Request,
@@ -204,7 +210,8 @@ def admin_blogs_page(
     )
 
 
-# soft delete blog
+# Hides a post so it no longer appears anywhere on the site.
+# The post is kept in the database and can be restored.
 @router.post("/admin/blogs/{blog_id}/hide")
 def hide_blog(
     blog_id: int,
@@ -240,6 +247,8 @@ def hide_blog(
     )
 
 
+# Makes a hidden post visible again.
+# Redirects back to the admin posts list.
 @router.post("/admin/blogs/{blog_id}/restore")
 def admin_blogs_restore(
     request: Request,
@@ -262,7 +271,8 @@ def admin_blogs_restore(
     return RedirectResponse(url="/admin/blogs", status_code=303)
 
 
-# hard delete blog
+# Permanently deletes a post.
+# Also deletes its uploaded image or video.
 @router.post("/admin/blogs/{blog_id}/delete")
 def delete_blog(
     blog_id: int,
@@ -295,7 +305,8 @@ def delete_blog(
     )
 
 
-# admin reports page
+# Lists posts that have at least one user report, paginated.
+# The admin opens one from here to review it.
 @router.get("/admin/reports")
 def admin_reports_page(
     request: Request,
@@ -319,7 +330,8 @@ def admin_reports_page(
     )
 
 
-# admin review report page
+# Shows all reports for one post, with the most recent highlighted.
+# Redirects back if the post has no reports.
 @router.get("/admin/reports/{blog_id}")
 def review_report_page(
     blog_id: int,
@@ -348,7 +360,8 @@ def review_report_page(
     )
 
 
-# admin review report status and action update page
+# Updates the status of a post's reports (e.g. resolved or dismissed).
+# Only reports still pending are changed; no action is taken on the post itself.
 @router.post("/admin/reports/{blog_id}/status")
 def admin_update_report_status(
     blog_id: int,
@@ -382,7 +395,8 @@ def admin_update_report_status(
     )
 
 
-# admin account activation page
+# Lists account activation requests from blocked users, paginated.
+# Newest requests first.
 @router.get("/admin/activation-requests")
 def admin_activation_request_page(
     request: Request,
@@ -410,6 +424,8 @@ def admin_activation_request_page(
     )
 
 
+# Approves or rejects an account activation request.
+# Approving reactivates the user's account.
 @router.post("/admin/account-activation/{activation_id}/update")
 def admin_account_activation_update(
     activation_id: int,

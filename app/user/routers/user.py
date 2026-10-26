@@ -75,6 +75,8 @@ def safe_next(next_url: str | None, fallback: str):
     return fallback
 
 
+# Shows the logged-in user's own profile header.
+# Includes their post, follower and following counts.
 @router.get("/user-profile")
 def user_profile_page(
     request: Request,
@@ -97,6 +99,8 @@ def user_profile_page(
     )
 
 
+# Shows the edit-profile form for the logged-in user.
+# Prefills it with their current details.
 @router.get("/profile-edit")
 def edit_profile_page(
     request: Request, current_user: User = Depends(require_normal_user)
@@ -108,6 +112,8 @@ def edit_profile_page(
     )
 
 
+# Saves profile changes, checking username uniqueness and field length limits.
+# A new profile image replaces the old one, which is then deleted.
 @router.post("/profile-edit")
 def edit_user_profile(
     request: Request,
@@ -160,6 +166,8 @@ def edit_user_profile(
     return RedirectResponse(url="/user-profile", status_code=status.HTTP_303_SEE_OTHER)
 
 
+# Lists the logged-in user's own posts, or drafts when tab=drafts.
+# Paginated, and rendered on the profile page with the profile counts.
 @router.get("/user-blogs")
 def user_blogs(
     request: Request,
@@ -195,6 +203,8 @@ def user_blogs(
     )
 
 
+# Deletes one of the logged-in user's own posts.
+# Also removes the post's uploaded image or video.
 @router.post("/user-blog/{blog_id}/delete")
 def delete_blog(
     blog_id: int,
@@ -217,6 +227,8 @@ def delete_blog(
     )
 
 
+# Shows the edit form for one of the user's own posts.
+# Plain reposts can't be edited, so they redirect back to /user-blogs.
 @router.get("/user-blog/{blog_id}/edit")
 def edit_blog_page(
     request: Request,
@@ -244,6 +256,8 @@ def edit_blog_page(
     )
 
 
+# Saves edits to a post's text and optionally replaces its image or video.
+# Updates hashtags and notifies only users newly mentioned by the edit.
 @router.post("/user-blog/{blog_id}/edit")
 async def update_blog(
     request: Request,
@@ -324,6 +338,8 @@ async def update_blog(
     )
 
 
+# Publishes one of the user's drafts.
+# Sets published_at and sends the mention notifications that drafts hold back.
 @router.post("/user-blog/{blog_id}/publish")
 def publish_blog(
     request: Request,
@@ -362,6 +378,8 @@ def empty_page(page_size: int):
     return Page(items=[], page=1, per_page=page_size, total=0)
 
 
+# Shows another user's public profile and their posts.
+# Posts stay hidden for an unfollowed private account or if either side blocked.
 @router.get("/profile/{username}")
 def public_profile(
     request: Request,
@@ -434,6 +452,8 @@ def public_profile(
     )
 
 
+# Lists a user's followers or the people they follow.
+# Private accounts only show this list to approved followers.
 @router.get("/profile/{username}/{relation}")
 def follow_list(
     request: Request,
@@ -500,6 +520,8 @@ def follow_list(
     )
 
 
+# JSON API: toggles following a user.
+# For private accounts it sends or cancels a follow request instead.
 @router.post("/user/{user_id}/follow")
 def toggle_follow(
     user_id: int,
@@ -571,6 +593,8 @@ def toggle_follow(
     )
 
 
+# Approves or declines a follow request sent to the logged-in user.
+# The request is removed either way, then redirects to notifications.
 @router.post("/follow-requests/{request_id}/{decision}")
 def answer_follow_request(
     request: Request,
@@ -620,6 +644,8 @@ def restrictable_user(session: Session, current_user: User, user_id: int):
     return target
 
 
+# Toggles blocking a user.
+# Blocking also removes follows and follow requests in both directions.
 @router.post("/user/{user_id}/block")
 def toggle_block(
     request: Request,
@@ -671,6 +697,8 @@ def toggle_block(
     )
 
 
+# Toggles muting a user.
+# Muted users' posts are hidden from your feeds without them knowing.
 @router.post("/user/{user_id}/mute")
 def toggle_mute(
     request: Request,

@@ -15,6 +15,8 @@ from utils.security import hash_password, verify_password
 router = APIRouter()
 
 
+# Shows the settings page for the logged-in user.
+# Includes the lists of users they have blocked and muted.
 @router.get("/settings")
 def settings_page(
     request: Request,
@@ -48,6 +50,8 @@ def settings_page(
     )
 
 
+# Changes the password after checking the current one and the new password rules.
+# Signs out other sessions but keeps this one signed in with a new cookie.
 @router.post("/settings/password")
 def change_password(
     request: Request,
@@ -83,6 +87,8 @@ def change_password(
     return response
 
 
+# Switches the account between private and public.
+# Going public auto-approves all pending follow requests.
 @router.post("/settings/privacy")
 def update_privacy(
     request: Request,
