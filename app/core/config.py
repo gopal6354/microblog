@@ -63,6 +63,19 @@ def create_refresh_token(data: dict):
     )
 
 
+def set_access_cookie(response, user):
+    response.set_cookie(
+        key="access_token",
+        value=create_access_token(
+            data={"sub": str(user.id), "ver": user.token_version}
+        ),
+        httponly=True,
+        samesite="lax",
+        secure=settings.COOKIE_SECURE,
+        max_age=60 * 60 * 24 * settings.ACCESS_TOKEN_EXPIRE_TIME,
+    )
+
+
 def decode_token(token: str):
     token = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
     return token

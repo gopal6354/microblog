@@ -1,12 +1,22 @@
+{# a plain repost renders the original post under a "reposted" banner #}
+{% set post = blog.repost_of if blog.is_plain_repost else blog %}
 <article class="post-card" id="post-{{ blog.id }}">
+
+    {% if blog.is_plain_repost %}
+    <div class="repost-banner">
+        <i class="bi bi-repeat"></i>
+        <a href="/profile/{{ blog.user.username }}">{{ blog.user.full_name or blog.user.username }}</a>
+        reposted
+    </div>
+    {% endif %}
 
     <div class="post-header">
 
-        <a href="/profile/{{ blog.user.username }}" class="avatar">
+        <a href="/profile/{{ post.user.username }}" class="avatar">
 
-            {% if blog.user.profile_image %}
+            {% if post.user.profile_image %}
 
-            <img src="{{ media_url(blog.user.profile_image) }}" alt="{{ blog.user.username }}"
+            <img src="{{ media_url(post.user.profile_image) }}" alt="{{ post.user.username }}"
                 class="avatar-img">
 
             {% else %}
@@ -19,20 +29,24 @@
 
         <div class="post-user">
 
-            <a href="/profile/{{ blog.user.username }}" class="user-top">
+            <a href="/profile/{{ post.user.username }}" class="user-top">
 
-                <h6>{{ blog.user.full_name or blog.user.username }}</h6>
+                <h6>{{ post.user.full_name or post.user.username }}</h6>
 
                 <small>
-                    @{{ blog.user.username }}
+                    @{{ post.user.username }}
                 </small>
 
             </a>
 
-            {% if blog.location %}
-            <small class="post-location" data-blog-id="{{ blog.id }}" data-location="{{ blog.location }}" data-can-edit="{% if current_user and current_user.id == blog.user_id %}true{% else %}false{% endif %}">
+            <a href="/post/{{ post.id }}" class="post-time">
+                {{ post.published_at.strftime("%d %b %Y, %H:%M") }}
+            </a>
+
+            {% if post.location %}
+            <small class="post-location" data-blog-id="{{ post.id }}" data-location="{{ post.location }}" data-can-edit="{% if current_user and current_user.id == post.user_id %}true{% else %}false{% endif %}">
                 <i class="bi bi-geo-alt"></i>
-                <span class="post-location-name">{{ blog.location }}</span>
+                <span class="post-location-name">{{ post.location }}</span>
                 <span class="text-muted">·</span>
                 <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap</a>
             </small>
@@ -50,21 +64,21 @@
     <div class="post-content">
 
         <p>
-            {{ blog.content }}
+            {{ post.content|linkify }}
         </p>
 
-        {% if blog.image %}
+        {% if post.image %}
 
-        <img src="{{ media_url(blog.image) }}" class="img-fluid rounded mt-3" alt="Blog Image">
+        <img src="{{ media_url(post.image) }}" class="img-fluid rounded mt-3" alt="Blog Image">
 
         {% endif %}
 
 
-        {% if blog.video %}
+        {% if post.video %}
 
         <video class="w-100 rounded mt-3" controls>
 
-            <source src="{{ media_url(blog.video) }}" type="video/mp4">
+            <source src="{{ media_url(post.video) }}" type="video/mp4">
 
             Your browser does not support the video tag.
 
@@ -78,25 +92,41 @@
     <div class="post-actions">
 
         <div class="left-actions">
-            <button type="button" class="like-btn" data-blog-id="{{ blog.id }}">
-                {% if blog.is_liked %}
+            <button type="button" class="like-btn" data-blog-id="{{ post.id }}">
+                {% if post.is_liked %}
                 <i class="bi bi-heart-fill text-danger"></i>
                 {% else %}
                 <i class="bi bi-heart"></i>
                 {% endif %}
 
-                <span>{{ blog.likes|length }}</span>
+                <span>{{ post.likes|length }}</span>
             </button>
 
             <button type="button" class="action-btn comment-toggle-btn" aria-expanded="false"
                 aria-controls="comments-{{ blog.id }}" aria-label="Show comments">
                 <i class="bi bi-chat"></i>
-                <span class="comment-count">{{ blog.visible_comments|length }}</span>
+                <span class="comment-count">{{ post.comment_count }}</span>
+            </button>
+
+            {% if not post.user.is_private %}
+            <button type="button" class="action-btn repost-btn {% if post.is_reposted %}reposted{% endif %}"
+                data-blog-id="{{ post.id }}" aria-pressed="{{ 'true' if post.is_reposted else 'false' }}"
+                aria-label="Repost" title="Repost"
+                {% if current_user and current_user.id == post.user_id %}disabled{% endif %}>
+                <i class="bi bi-repeat"></i>
+                <span class="repost-count">{{ post.repost_count }}</span>
+            </button>
+
+            {% endif %}
+
+            <button type="button" class="action-btn bookmark-btn" data-blog-id="{{ post.id }}"
+                aria-pressed="{{ 'true' if post.is_bookmarked else 'false' }}" aria-label="Bookmark" title="Bookmark">
+                <i class="bi {{ 'bi-bookmark-fill' if post.is_bookmarked else 'bi-bookmark' }}"></i>
             </button>
         </div>
 
-        {% if current_user.id != blog.user_id %}
-        <button type="button" class="report-btn" data-blog-id="{{ blog.id }}" data-bs-toggle="modal"
+        {% if current_user.id != post.user_id %}
+        <button type="button" class="report-btn" data-blog-id="{{ post.id }}" data-bs-toggle="modal"
             data-bs-target="#reportModal">
 
             <i class="bi bi-flag-fill "></i>
@@ -109,16 +139,25 @@
     <section class="post-comments" id="comments-{{ blog.id }}" hidden>
 
         <ul class="comment-list">
-            {% for comment in blog.visible_comments %}
+            {% for comment in post.visible_comments %}
             {% include "partials/comment_item.html" %}
             {% endfor %}
         </ul>
 
         {% if current_user %}
-        <form class="comment-form" data-blog-id="{{ blog.id }}">
-            <input type="text" name="content" class="form-control form-control-sm" maxlength="500"
-                placeholder="Write a comment..." aria-label="Write a comment" required>
-            <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3">Reply</button>
+        <form class="comment-form" data-blog-id="{{ post.id }}">
+            <input type="hidden" name="parent_id" value="">
+            <div class="replying-to" hidden>
+                Replying to <span class="replying-to-name"></span>
+                <button type="button" class="replying-to-cancel" aria-label="Cancel reply">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+            <div class="comment-form-row">
+                <input type="text" name="content" class="form-control form-control-sm" maxlength="500"
+                    placeholder="Write a comment..." aria-label="Write a comment" required>
+                <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3">Reply</button>
+            </div>
         </form>
         {% else %}
         <p class="comment-login-hint">

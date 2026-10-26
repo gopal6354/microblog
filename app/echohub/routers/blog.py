@@ -8,6 +8,11 @@ from utils.file_upload import save_file, IMAGE_DIR, VIDEO_DIR, FileUploadError
 from fastapi.responses import RedirectResponse
 from models.blogs import Blog
 from utils.flash import flash
+from echohub.services.notification_service import notify_mentions
+from echohub.services.post_service import (
+    post_content_error,
+    sync_tags,
+)
 
 router = APIRouter()
 
@@ -37,6 +42,7 @@ async def create_blog(
     location: str | None = Form(None),
     image: UploadFile | None = File(None),
     video: UploadFile | None = File(None),
+    action: str = Form("publish"),
     session: Session = Depends(get_db),
     current_user: User = Depends(require_normal_user),
 ):
@@ -44,37 +50,32 @@ async def create_blog(
     video_path = None
     has_image = bool(image and image.filename)
     has_video = bool(video and video.filename)
+    form_url = "/create-blog"
 
     content = content.strip()
 
-    if not content:
-        flash(request, "Post content cannot be empty.", "danger")
+    error = post_content_error(content)
+    if error:
+        flash(request, error, "danger")
         return RedirectResponse(
-            url="/create-blog",
+            url=form_url,
             status_code=303,
         )
 
-    words = content.split()
-
-    if len(words) > 280:
-        flash(request, "Your post cannot exceed 280 words.", "danger")
-        return RedirectResponse(
-            url="/create-blog",
-            status_code=303,
-        )
+    is_draft = action == "draft"
 
     if has_image and has_video:
         flash(request, "You can upload either an image or a video, not both.", "danger")
 
         return RedirectResponse(
-            url="/create-blog",
+            url=form_url,
             status_code=303,
         )
 
     location = location.strip() if location else None
     if location and len(location) > 100:
         flash(request, "Location information is too long.", "danger")
-        return RedirectResponse(url="/create-blog", status_code=303)
+        return RedirectResponse(url=form_url, status_code=303)
 
     try:
         if has_image:
@@ -84,7 +85,7 @@ async def create_blog(
             video_path = save_file(video, VIDEO_DIR)
     except FileUploadError as e:
         flash(request, str(e), "danger")
-        return RedirectResponse(url="/create-blog", status_code=303)
+        return RedirectResponse(url=form_url, status_code=303)
 
     new_blog = Blog(
         user_id=current_user.id,
@@ -92,11 +93,19 @@ async def create_blog(
         image=image_path,
         video=video_path,
         location=location or None,
+        is_draft=is_draft,
     )
 
     session.add(new_blog)
+    sync_tags(session, new_blog)
+    session.flush()
+    notify_mentions(session, current_user.id, content, new_blog)
     session.commit()
     session.refresh(new_blog)
+
+    if is_draft:
+        flash(request, "Draft saved.", "success")
+        return RedirectResponse(url="/user-blogs?tab=drafts", status_code=303)
 
     return RedirectResponse(
         url="/",

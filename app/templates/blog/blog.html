@@ -63,7 +63,7 @@ EchoHub | Create Blog
                                 required>{% if is_edit %}{{ blog.content }}{% endif %}</textarea>
 
                             <div class="form-text">
-                                Maximum 150 characters.
+                                Maximum 150 characters. Use #hashtags and @mentions.
                             </div>
 
                         </div>
@@ -198,8 +198,22 @@ EchoHub | Create Blog
 
                             </a>
 
+                            {% if not is_edit %}
                             <button
                                 type="submit"
+                                name="action"
+                                value="draft"
+                                class="btn btn-outline-primary rounded-pill px-4">
+
+                                Save as draft
+
+                            </button>
+                            {% endif %}
+
+                            <button
+                                type="submit"
+                                name="action"
+                                value="publish"
                                 class="btn btn-primary rounded-pill px-4">
 
                                 <i class=" me-2"></i>

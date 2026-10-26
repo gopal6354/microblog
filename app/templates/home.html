@@ -16,6 +16,13 @@ EchoHub - Home
 
         </button>
     </div>
+
+    {% if current_user %}
+    <nav class="follow-list-tabs">
+        <a href="/" class="{% if feed == 'for-you' %}active{% endif %}">For You</a>
+        <a href="/?feed=following" class="{% if feed == 'following' %}active{% endif %}">Following</a>
+    </nav>
+    {% endif %}
 </header>
 
 
@@ -28,8 +35,20 @@ EchoHub - Home
 <section class="posts-container">
     {% for blog in blogs  %}
         {% include "partials/post_card.html" %}
+    {% else %}
+        <div class="empty-posts">
+            {% if feed == "following" %}
+            <h5>Nothing here yet</h5>
+            <p>Posts from people you follow will show up here.</p>
+            {% else %}
+            <h5>No posts yet</h5>
+            <p>Be the first to share something.</p>
+            {% endif %}
+        </div>
     {% endfor %}
 </section>
+
+{% include "partials/pagination.html" %}
 
 
 

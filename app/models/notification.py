@@ -11,6 +11,10 @@ from database import Base
 class NotificationType(str, Enum):
     COMMENT = "comment"
     FOLLOW = "follow"
+    REPLY = "reply"
+    MENTION = "mention"
+    REPOST = "repost"
+    FOLLOW_REQUEST = "follow_request"
 
 
 class Notification(Base):
@@ -36,6 +40,9 @@ class Notification(Base):
     follow_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("follows.id", ondelete="CASCADE"), nullable=True
     )
+    follow_request_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("follow_requests.id", ondelete="CASCADE"), nullable=True
+    )
     is_read: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
@@ -48,3 +55,4 @@ class Notification(Base):
     blog = relationship("Blog", back_populates="notifications")
     comment = relationship("Comment", back_populates="notifications")
     follow = relationship("Follow", back_populates="notifications")
+    follow_request = relationship("FollowRequest", back_populates="notifications")

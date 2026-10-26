@@ -17,17 +17,44 @@
             </a>
             <small>
                 @{{ comment.user.username }} · {{ comment.created_at.strftime("%d %b %Y, %H:%M") }}
+                <span class="comment-edited" {% if not comment.updated_at %}hidden{% endif %}>· edited</span>
             </small>
 
             {% if current_user and current_user.id == comment.user_id %}
-            <button type="button" class="comment-delete-btn" data-comment-id="{{ comment.id }}"
-                aria-label="Delete comment">
-                <i class="bi bi-trash"></i>
-            </button>
+            <span class="comment-owner-actions">
+                <button type="button" class="comment-edit-btn" data-comment-id="{{ comment.id }}"
+                    aria-label="Edit comment">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button type="button" class="comment-delete-btn" data-comment-id="{{ comment.id }}"
+                    aria-label="Delete comment">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </span>
             {% endif %}
         </div>
 
-        <p class="comment-text">{{ comment.content }}</p>
+        <p class="comment-text" data-raw="{{ comment.content }}">{{ comment.content|linkify }}</p>
+
+        {% if current_user %}
+        {# replies attach to the top-level comment so threads stay one level deep #}
+        <button type="button" class="comment-reply-btn"
+            data-parent-id="{{ comment.parent_id or comment.id }}" data-username="{{ comment.user.username }}">
+            Reply
+        </button>
+        {% endif %}
+
+        {% if not comment.parent_id %}
+        <ul class="reply-list">
+            {% if comment.visible_replies is defined %}
+            {% for reply in comment.visible_replies %}
+            {% with comment=reply %}
+            {% include "partials/comment_item.html" %}
+            {% endwith %}
+            {% endfor %}
+            {% endif %}
+        </ul>
+        {% endif %}
 
     </div>
 

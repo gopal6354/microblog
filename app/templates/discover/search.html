@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}
+EchoHub | Search
+{% endblock %}
+
+{% block content %}
+
+<header class="feed-header">
+    <div class="feed-title">
+        <h3>Search</h3>
+    </div>
+
+    <form action="/search" method="GET" class="search-form search-form-page" role="search">
+        <i class="bi bi-search"></i>
+        <input type="search" name="q" value="{{ q }}" class="form-control" maxlength="100"
+            placeholder="Search posts, people or #tags" aria-label="Search" autofocus>
+        <input type="hidden" name="tab" value="{{ tab }}">
+    </form>
+
+    {% if q %}
+    <nav class="follow-list-tabs">
+        <a href="/search?q={{ q|urlencode }}&tab=posts" class="{% if tab == 'posts' %}active{% endif %}">Posts</a>
+        <a href="/search?q={{ q|urlencode }}&tab=people" class="{% if tab == 'people' %}active{% endif %}">People</a>
+    </nav>
+    {% endif %}
+</header>
+
+{% if not q %}
+
+<div class="empty-posts">
+    <i class="bi bi-search notification-empty-icon"></i>
+    <h5>Find posts and people</h5>
+    <p>Search by keyword, @username or #hashtag.</p>
+</div>
+
+{% elif tab == "people" %}
+
+<section class="follow-list">
+    {% for listed in results %}
+    {% include "partials/user_row.html" %}
+    {% else %}
+    <div class="empty-posts">
+        <h5>No people found</h5>
+        <p>Nobody matches “{{ q }}”.</p>
+    </div>
+    {% endfor %}
+</section>
+
+{% else %}
+
+<section class="posts-container">
+    {% for blog in results %}
+    {% include "partials/post_card.html" %}
+    {% else %}
+    <div class="empty-posts">
+        <h5>No posts found</h5>
+        <p>No posts match “{{ q }}”.</p>
+    </div>
+    {% endfor %}
+</section>
+
+{% include "partials/report_modal.html" %}
+
+{% endif %}
+
+{% include "partials/pagination.html" %}
+
+{% endblock %}

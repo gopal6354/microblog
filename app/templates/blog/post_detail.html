@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}
+EchoHub | Post
+{% endblock %}
+
+{% block content %}
+
+<header class="feed-header">
+    <div class="feed-title">
+        <h3>
+            <a href="/" class="follow-list-back" aria-label="Back to home">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            Post
+        </h3>
+    </div>
+</header>
+
+<section class="posts-container post-detail">
+    {% include "partials/post_card.html" %}
+</section>
+
+{% include "partials/report_modal.html" %}
+
+{% endblock %}

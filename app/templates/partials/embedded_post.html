@@ -1,0 +1,11 @@
+{# expects `original`: the post a repost points at #}
+<a href="/post/{{ original.id }}" class="embedded-post">
+    <div class="embedded-post-author">
+        <strong>{{ original.user.full_name or original.user.username }}</strong>
+        <small>@{{ original.user.username }} · {{ original.published_at.strftime("%d %b %Y") }}</small>
+    </div>
+    <p class="embedded-post-text">{{ original.content|truncate(280) }}</p>
+    {% if original.image %}
+    <img src="{{ media_url(original.image) }}" class="embedded-post-media" alt="Reposted post image">
+    {% endif %}
+</a>

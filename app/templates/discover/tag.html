@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}
+EchoHub | #{{ tag_name }}
+{% endblock %}
+
+{% block content %}
+
+<header class="feed-header">
+    <div class="feed-title">
+        <h3>#{{ tag_name }}</h3>
+    </div>
+</header>
+
+<section class="posts-container">
+    {% for blog in blogs %}
+    {% include "partials/post_card.html" %}
+    {% else %}
+    <div class="empty-posts">
+        <h5>No posts with #{{ tag_name }}</h5>
+        <p>Use #{{ tag_name }} in a post to start the conversation.</p>
+    </div>
+    {% endfor %}
+</section>
+
+{% include "partials/pagination.html" %}
+
+{% include "partials/report_modal.html" %}
+
+{% endblock %}

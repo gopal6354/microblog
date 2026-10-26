@@ -1,5 +1,11 @@
 <article class="profile-post">
 
+    {% if blog.is_plain_repost %}
+    <div class="repost-banner">
+        <i class="bi bi-repeat"></i> You reposted
+    </div>
+    {% endif %}
+
     <div class="profile-post-header">
 
         <div class="profile-post-user">
@@ -11,16 +17,30 @@
             <div class="profile-post-info">
                 @{{ user.username }}
                 <span class="mx-1">•</span>
-                {{ blog.created_at.strftime("%d %b %Y") }}
+                {% if blog.is_draft %}
+                Draft · saved {{ blog.created_at.strftime("%d %b %Y") }}
+                {% else %}
+                <a href="/post/{{ blog.id }}">{{ blog.published_at.strftime("%d %b %Y") }}</a>
+                {% endif %}
             </div>
 
         </div>
 
         <div class="profile-post-actions">
 
+            {% if blog.is_draft %}
+            <form action="/user-blog/{{ blog.id }}/publish" method="POST" class="m-0">
+                <button type="submit" class="action-icon" title="Publish now" aria-label="Publish now">
+                    <i class="bi bi-send"></i>
+                </button>
+            </form>
+            {% endif %}
+
+            {% if not blog.is_plain_repost %}
             <a href="/user-blog/{{ blog.id }}/edit" class="action-icon edit-icon">
                 <i class="bi bi-pencil-square"></i>
             </a>
+            {% endif %}
 
             <form action="/user-blog/{{ blog.id }}/delete"
                   method="POST"
@@ -29,7 +49,7 @@
                 <button
                     type="submit"
                     class="action-icon delete-icon"
-                    onclick="return confirm('Delete this post?')">
+                    onclick="return confirm('{{ 'Undo this repost?' if blog.is_plain_repost else 'Delete this post?' }}')">
 
                     <i class="bi bi-trash"></i>
 
@@ -43,7 +63,9 @@
 
     <div class="profile-post-body">
 
-        <p>{{ blog.content }}</p>
+        {% if blog.content %}
+        <p>{{ blog.content|linkify }}</p>
+        {% endif %}
 
         {% if blog.image %}
         <img
@@ -56,6 +78,12 @@
         <video controls class="profile-post-media">
             <source src="{{ media_url(blog.video) }}" type="video/mp4">
         </video>
+        {% endif %}
+
+        {% if blog.repost_of %}
+        {% with original=blog.repost_of %}
+        {% include "partials/embedded_post.html" %}
+        {% endwith %}
         {% endif %}
 
     </div>

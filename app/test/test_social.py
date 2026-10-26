@@ -123,8 +123,18 @@ def test_follow_toggles(client, db, make_user):
     first = client.post(f"/user/{bob.id}/follow").json()
     second = client.post(f"/user/{bob.id}/follow").json()
 
-    assert first == {"success": True, "following": True, "follower_count": 1}
-    assert second == {"success": True, "following": False, "follower_count": 0}
+    assert first == {
+        "success": True,
+        "following": True,
+        "requested": False,
+        "follower_count": 1,
+    }
+    assert second == {
+        "success": True,
+        "following": False,
+        "requested": False,
+        "follower_count": 0,
+    }
     assert db.query(Follow).count() == 0
 
 

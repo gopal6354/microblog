@@ -6,7 +6,7 @@ from fastapi import (
     status,
     BackgroundTasks,
 )
-from core.config import templates, create_access_token, settings
+from core.config import templates, set_access_cookie
 from sqlalchemy.orm import Session
 from sqlalchemy import select, or_
 from database import get_db
@@ -175,10 +175,6 @@ def login_user(
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
-    access_token = create_access_token(
-        data={"sub": str(exist_user.id), "ver": exist_user.token_version}
-    )
-
     # currently not using
     # create_refresh_token(data={"sub": str(exist_user.id)})
 
@@ -191,14 +187,7 @@ def login_user(
         # flash(request, "Welcome back!", "success")
         response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
 
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        httponly=True,
-        samesite="lax",
-        secure=settings.COOKIE_SECURE,
-        max_age=60 * 60 * 24 * settings.ACCESS_TOKEN_EXPIRE_TIME,
-    )
+    set_access_cookie(response, exist_user)
 
     return response
 
