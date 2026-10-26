@@ -52,6 +52,12 @@ def like_blog(
             {"success": False, "message": "Login required"}, status_code=401
         )
 
+    blog = session.get(Blog, blog_id)
+    if not blog or blog.is_hidden:
+        return JSONResponse(
+            {"success": False, "message": "Post not found"}, status_code=404
+        )
+
     exits_like = session.scalar(
         select(Like).where(Like.user_id == current_user.id, Like.blog_id == blog_id)
     )
@@ -63,7 +69,13 @@ def like_blog(
         new_like = Like(user_id=current_user.id, blog_id=blog_id)
         session.add(new_like)
         liked = True
-    session.commit()
+
+    try:
+        session.commit()
+    except IntegrityError:
+        # concurrent duplicate like; the like already exists
+        session.rollback()
+        liked = True
     like_count = session.scalar(
         select(func.count(Like.id)).where(Like.blog_id == blog_id)
     )
@@ -81,7 +93,7 @@ def report_blog(
     current_user: User = Depends(require_normal_user),
 ):
     blog = session.get(Blog, blog_id)
-    if not blog:
+    if not blog or blog.is_hidden or blog.user_id == current_user.id:
         return RedirectResponse(url="/", status_code=303)
 
     existing_report = session.scalar(
@@ -109,7 +121,3 @@ def report_blog(
         session.rollback()
         return RedirectResponse(url="/", status_code=303)
     return RedirectResponse(url="/", status_code=303)
-
-
-print("EchoHub router loaded successfully.")
-print("EchoHub router loaded successfully.")

@@ -17,6 +17,10 @@ services:
     # Map port 9000 on the host to port 8000 in the container
     ports:
       - "9000:8000"
+    # Wait for the database to accept connections before starting
+    depends_on:
+      db:
+        condition: service_healthy
 
 # Define the database service for PostgreSQL
   db:
@@ -30,6 +34,12 @@ services:
     # Mount a named volume for persistent database storage
     volumes:
       - db_data:/var/lib/postgresql/data
+    # Report healthy once PostgreSQL accepts connections
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 # Define a named volume for the database data
 volumes:
   db_data:

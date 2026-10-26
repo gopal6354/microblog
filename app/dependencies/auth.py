@@ -35,6 +35,10 @@ def get_current_user(
                 status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
             )
 
+        # suspended users are treated as logged out
+        if user.is_deleted:
+            return None
+
         if payload.get("ver", 0) != user.token_version:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -65,7 +69,6 @@ def require_super_admin(
     current_user: User | None = Depends(get_current_user),
 ):
     if current_user is None:
-        print("login")
         raise RedirectException("/login")
 
     if current_user.role != RoleChoice.SUPER_ADMIN:

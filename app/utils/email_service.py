@@ -25,8 +25,6 @@ def send_email(receiver_email: str, subject: str, body: str):
 
             server.send_message(message)
 
-            print("Email sent successfully!")
-
         logger.info(f"Email sent successfully to {receiver_email}")
 
     except Exception as e:

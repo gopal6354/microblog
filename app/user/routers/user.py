@@ -9,10 +9,19 @@ from schemas.dependencies import update_profile_form
 from schemas.auth import UpdateUserProfile
 from fastapi.responses import RedirectResponse
 from models.blogs import Blog
-from utils.file_upload import save_file, IMAGE_DIR, VIDEO_DIR
+from utils.file_upload import (
+    save_file,
+    delete_file,
+    IMAGE_DIR,
+    VIDEO_DIR,
+    FileUploadError,
+)
 from utils.flash import flash
 
 router = APIRouter()
+
+# max lengths match the User model columns
+PROFILE_FIELD_LIMITS = {"username": 50, "full_name": 50, "bio": 150}
 
 
 @router.get("/user-profile")
@@ -28,7 +37,11 @@ def user_profile_page(
     return templates.TemplateResponse(
         request=request,
         name="/user/user_profile.html",
-        context={"user": current_user, "post_count": post_count},
+        context={
+            "user": current_user,
+            "post_count": post_count,
+            "flash": request.session.pop("_flash", None),
+        },
     )
 
 
@@ -39,7 +52,7 @@ def edit_profile_page(
     return templates.TemplateResponse(
         request=request,
         name="/user/update_user_profile.html",
-        context={"user": current_user},
+        context={"user": current_user, "flash": request.session.pop("_flash", None)},
     )
 
 
@@ -51,14 +64,46 @@ def edit_user_profile(
     profile_image: UploadFile | None = File(None),
     current_user: User = Depends(require_normal_user),
 ):
-    for k, val in user.model_dump(exclude_unset=True).items():
+    data = user.model_dump(exclude_unset=True)
+
+    if "username" in data:
+        data["username"] = data["username"].strip()
+
+        if not data["username"]:
+            flash(request, "Username cannot be empty.", "danger")
+            return RedirectResponse(url="/profile-edit", status_code=303)
+
+        username_taken = session.scalar(
+            select(User).where(
+                User.username == data["username"], User.id != current_user.id
+            )
+        )
+        if username_taken:
+            flash(request, "This username is already taken.", "danger")
+            return RedirectResponse(url="/profile-edit", status_code=303)
+
+    for field, limit in PROFILE_FIELD_LIMITS.items():
+        if data.get(field) and len(data[field]) > limit:
+            label = field.replace("_", " ").capitalize()
+            flash(request, f"{label} cannot exceed {limit} characters.", "danger")
+            return RedirectResponse(url="/profile-edit", status_code=303)
+
+    old_profile_image = None
+    if profile_image and profile_image.filename:
+        try:
+            new_profile_image = save_file(profile_image, IMAGE_DIR)
+        except FileUploadError as e:
+            flash(request, str(e), "danger")
+            return RedirectResponse(url="/profile-edit", status_code=303)
+
+        old_profile_image = current_user.profile_image
+        current_user.profile_image = new_profile_image
+
+    for k, val in data.items():
         setattr(current_user, k, val)
 
-    if profile_image and profile_image.filename:
-        current_user.profile_image = save_file(profile_image, IMAGE_DIR)
-
     session.commit()
-    print("data save")
+    delete_file(old_profile_image)
     session.refresh(current_user)
     return RedirectResponse(url="/user-profile", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -84,6 +129,7 @@ def user_blogs(
             "blogs": blogs,
             "post_count": post_count,
             "active_tab": tab,
+            "flash": request.session.pop("_flash", None),
         },
     )
 
@@ -97,8 +143,12 @@ def delete_blog(
     blog = session.get(Blog, blog_id)
 
     if blog and blog.user_id == current_user.id:
+        media = [blog.image, blog.video]
         session.delete(blog)
         session.commit()
+
+        for path in media:
+            delete_file(path)
 
     return RedirectResponse(
         url="/user-blogs",
@@ -128,6 +178,7 @@ def edit_blog_page(
             "user": current_user,
             "is_edit": True,
             "blog": blog,
+            "flash": request.session.pop("_flash", None),
         },
     )
 
@@ -180,15 +231,29 @@ async def update_blog(
             status_code=303,
         )
 
+    try:
+        new_image = save_file(image, IMAGE_DIR) if has_image else None
+        new_video = save_file(video, VIDEO_DIR) if has_video else None
+    except FileUploadError as e:
+        flash(request, str(e), "danger")
+        return RedirectResponse(
+            url=f"/user-blog/{blog_id}/edit",
+            status_code=303,
+        )
+
     blog.content = content
 
-    if has_image:
-        blog.image = save_file(image, IMAGE_DIR)
-
-    if has_video:
-        blog.video = save_file(video, VIDEO_DIR)
+    # a post holds either an image or a video, so new media replaces both
+    replaced_media = []
+    if new_image or new_video:
+        replaced_media = [blog.image, blog.video]
+        blog.image = new_image
+        blog.video = new_video
 
     session.commit()
+
+    for path in replaced_media:
+        delete_file(path)
 
     return RedirectResponse(
         url="/user-blogs",

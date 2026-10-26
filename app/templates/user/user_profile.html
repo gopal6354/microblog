@@ -52,9 +52,7 @@ EchoHub | Profile
 
             </div>
 
-            <p class="bio mt-3">
-                {{ (user.bio or "") | replace('\n', '<br>') | safe }}
-            </p>
+            <p class="bio mt-3" style="white-space: pre-line;">{{ user.bio or "" }}</p>
             <div class="profile-meta mt-3">
                 {% if user.city or user.state %}
                 <span>

@@ -26,7 +26,7 @@ htmlcov/
 alembic/versions/*.pyc
 
 # Uploaded Files
-app/uploads/
+static/uploads/
 
 # Logs
 *.log

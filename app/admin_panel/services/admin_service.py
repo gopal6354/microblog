@@ -32,6 +32,8 @@ def update_report_status(
 
 def soft_delete_user(user: User):
     user.is_deleted = True
+    # invalidate any access tokens already issued to this user
+    user.token_version += 1
 
     for blog in user.blogs:
         if not blog.is_hidden:
@@ -64,7 +66,8 @@ def activation_status_update(
 
     if status == ActivationRequestStatus.APPROVED:
         activation.status = ActivationRequestStatus.APPROVED
-        return True, "Activation request approved."
+        restore_user(activation.user)
+        return True, "Activation request approved and account restored."
 
     if status == ActivationRequestStatus.REJECTED:
         activation.status = ActivationRequestStatus.REJECTED

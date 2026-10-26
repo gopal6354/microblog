@@ -4,7 +4,7 @@ from core.config import templates
 from database import get_db
 from dependencies.auth import require_normal_user
 from models.user import User
-from utils.file_upload import save_file, IMAGE_DIR, VIDEO_DIR
+from utils.file_upload import save_file, IMAGE_DIR, VIDEO_DIR, FileUploadError
 from fastapi.responses import RedirectResponse
 from models.blogs import Blog
 from utils.flash import flash
@@ -74,13 +74,17 @@ async def create_blog(
     location = location.strip() if location else None
     if location and len(location) > 100:
         flash(request, "Location information is too long.", "danger")
-        return RedirectResponse(url="/", status_code=303)
+        return RedirectResponse(url="/create-blog", status_code=303)
 
-    if has_image:
-        image_path = save_file(image, IMAGE_DIR)
+    try:
+        if has_image:
+            image_path = save_file(image, IMAGE_DIR)
 
-    if has_video:
-        video_path = save_file(video, VIDEO_DIR)
+        if has_video:
+            video_path = save_file(video, VIDEO_DIR)
+    except FileUploadError as e:
+        flash(request, str(e), "danger")
+        return RedirectResponse(url="/create-blog", status_code=303)
 
     new_blog = Blog(
         user_id=current_user.id,

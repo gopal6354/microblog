@@ -6,7 +6,7 @@ from fastapi import (
     status,
     BackgroundTasks,
 )
-from core.config import templates, create_access_token
+from core.config import templates, create_access_token, settings
 from sqlalchemy.orm import Session
 from sqlalchemy import select, or_
 from database import get_db
@@ -16,8 +16,6 @@ from models.user import User
 from utils.security import hash_password, verify_password
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
-from utils.otp import generate_otp
-from datetime import datetime, timedelta, UTC
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from models.user import StatusChoice
 from utils import email_service, otp_service
@@ -30,6 +28,8 @@ from utils.flash import flash
 from models.activation_request import AccountActivation, ActivationRequestStatus
 
 router = APIRouter()
+
+MIN_PASSWORD_LENGTH = 12
 
 
 # register page
@@ -62,6 +62,14 @@ def regiter_user(
         flash(request, "Password and confirm password do not match.", "danger")
         return RedirectResponse(url="/register", status_code=303)
 
+    if len(user.hashed_password) < MIN_PASSWORD_LENGTH:
+        flash(
+            request,
+            f"Password must be at least {MIN_PASSWORD_LENGTH} characters long.",
+            "danger",
+        )
+        return RedirectResponse(url="/register", status_code=303)
+
     hashe_password = hash_password(user.hashed_password)
     new_user = User(
         username=user.username, email=user.email, hashed_password=hashe_password
@@ -87,6 +95,7 @@ def regiter_user(
         db=session,
         background_tasks=background_tasks,
         email_sender=email_service.send_verification_otp_email,
+        request=request,
     )
 
     request.session["otp_email"] = new_user.email
@@ -128,10 +137,9 @@ def login_user(
             or_(User.email == user.username, User.username == user.username)
         )
     )
-    if not exist_user:
-        flash(
-            request, "No account found with the provided email or username.", "danger"
-        )
+    # same message for unknown user and wrong password to avoid account enumeration
+    if not exist_user or not verify_password(user.password, exist_user.hashed_password):
+        flash(request, "Invalid username/email or password.", "danger")
         return RedirectResponse(url="/login", status_code=303)
 
     # check user delete
@@ -149,29 +157,14 @@ def login_user(
             status_code=303,
         )
 
-    if not verify_password(user.password, exist_user.hashed_password):
-        flash(request, "Incorrect password. Please try again.", "danger")
-        return RedirectResponse(url="/login", status_code=303)
-
     if not exist_user.otp_verified:
-        if (
-            exist_user.otp is None
-            or exist_user.otp_expiry is None
-            or datetime.now(UTC) > exist_user.otp_expiry
-        ):
-            new_otp = generate_otp()
-
-            exist_user.otp = new_otp
-            exist_user.otp_expiry = datetime.now(UTC) + timedelta(minutes=5)
-
-            session.commit()
-
-            request.session["otp_email"] = exist_user.email
-
-            background_tasks.add_task(
-                email_service.send_verification_otp_email,
-                exist_user,
-                new_otp,
+        if exist_user.otp is None or otp_service.is_otp_expired(exist_user):
+            otp_service.generate_and_send_otp(
+                user=exist_user,
+                db=session,
+                background_tasks=background_tasks,
+                email_sender=email_service.send_verification_otp_email,
+                request=request,
             )
 
         request.session["otp_email"] = exist_user.email
@@ -203,8 +196,8 @@ def login_user(
         value=access_token,
         httponly=True,
         samesite="lax",
-        secure=False,
-        max_age=60 * 60 * 24,
+        secure=settings.COOKIE_SECURE,
+        max_age=60 * 60 * 24 * settings.ACCESS_TOKEN_EXPIRE_TIME,
     )
 
     return response
@@ -264,14 +257,21 @@ def verify_otp(
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
-    if db_user.otp != otp:
-        flash(request, "Invalid OTP. Please try again.", "danger")
+    if not db_user.otp or db_user.otp != otp:
+        if otp_service.register_failed_otp_attempt(request, db_user, session):
+            flash(
+                request,
+                "Too many invalid attempts. Please request a new OTP.",
+                "danger",
+            )
+        else:
+            flash(request, "Invalid OTP. Please try again.", "danger")
         return RedirectResponse(
             url="/verify-otp",
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
-    if db_user.otp_expiry is None or datetime.now(UTC) > db_user.otp_expiry:
+    if otp_service.is_otp_expired(db_user):
         flash(
             request,
             "Your OTP has expired. Please request a new OTP.",
@@ -291,6 +291,7 @@ def verify_otp(
     session.commit()
     request.session.pop("otp_email", None)
     request.session.pop("otp_flow", None)
+    request.session.pop("otp_attempts", None)
 
     flash(
         request,
@@ -318,27 +319,28 @@ def forget_password(
 ):
     user = session.scalar(select(User).where(User.email == email))
 
-    if not user:
-        flash(
-            request,
-            "No account found with this email address.",
-            "danger",
-        )
-        return RedirectResponse(
-            url="/forget-password", status_code=status.HTTP_303_SEE_OTHER
-        )
+    # a new reset request always invalidates any earlier verification
+    request.session.pop("reset_verified", None)
+    request.session.pop("otp_attempts", None)
 
-    request.session["otp_email"] = user.email
+    # same response whether or not the account exists, to avoid account enumeration
+    request.session["otp_email"] = email
     request.session["otp_flow"] = "reset_password"
 
-    otp_service.generate_and_send_otp(
-        user=user,
-        db=session,
-        background_tasks=background_tasks,
-        email_sender=email_service.send_reset_password_otp_email,
-    )
+    if user:
+        otp_service.generate_and_send_otp(
+            user=user,
+            db=session,
+            background_tasks=background_tasks,
+            email_sender=email_service.send_reset_password_otp_email,
+            request=request,
+        )
 
-    flash(request, "Otp send successfully.", "success")
+    flash(
+        request,
+        "If an account exists for this email, a password reset OTP has been sent.",
+        "success",
+    )
     return RedirectResponse(
         url="/verify-reset-otp",
         status_code=status.HTTP_303_SEE_OTHER,
@@ -388,18 +390,7 @@ def verify_reset_otp(
 
     user = session.scalar(select(User).where(User.email == email))
 
-    if not user:
-        flash(
-            request,
-            "No account found with this email address.",
-            "danger",
-        )
-        return RedirectResponse(
-            url="/forget-password",
-            status_code=status.HTTP_303_SEE_OTHER,
-        )
-
-    if not user.otp or not user.otp_expiry:
+    if not user or not user.otp or not user.otp_expiry:
         flash(
             request,
             "No valid OTP found. Please request a new password reset OTP.",
@@ -410,7 +401,7 @@ def verify_reset_otp(
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
-    if datetime.now(UTC) > user.otp_expiry:
+    if otp_service.is_otp_expired(user):
         user.otp = None
         user.otp_expiry = None
         session.commit()
@@ -427,6 +418,17 @@ def verify_reset_otp(
         )
 
     if otp != user.otp:
+        if otp_service.register_failed_otp_attempt(request, user, session):
+            flash(
+                request,
+                "Too many invalid attempts. Please request a new OTP.",
+                "danger",
+            )
+            return RedirectResponse(
+                url="/forget-password",
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
         flash(
             request,
             "Invalid OTP. Please try again.",
@@ -437,8 +439,10 @@ def verify_reset_otp(
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
-    request.session["reset_verified"] = True
+    # bind the verification to this email so it cannot be reused for another account
+    request.session["reset_verified"] = user.email
     request.session["otp_flow"] = "reset_password"
+    request.session.pop("otp_attempts", None)
     user.otp = None
     user.otp_expiry = None
 
@@ -456,10 +460,9 @@ def verify_reset_otp(
 
 @router.get("/reset-password")
 def reset_password_page(request: Request):
-    print("session data", request.session)
-    if request.session.get("otp_flow") != "reset_password" or not request.session.get(
+    if request.session.get("otp_flow") != "reset_password" or request.session.get(
         "reset_verified"
-    ):
+    ) != request.session.get("otp_email"):
         flash(
             request,
             "Please verify your password reset OTP first.",
@@ -485,7 +488,9 @@ def reset_password(
     confirm_password: str = Form(...),
     session: Session = Depends(get_db),
 ):
-    if not request.session.get("reset_verified"):
+    email = request.session.get("otp_email")
+
+    if not email or request.session.get("reset_verified") != email:
         flash(
             request,
             "Please verify your password reset OTP first.",
@@ -508,27 +513,15 @@ def reset_password(
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
-    if len(password) < 12:
+    if len(password) < MIN_PASSWORD_LENGTH:
         flash(
             request,
-            "Password must be at least 12 characters long.",
+            f"Password must be at least {MIN_PASSWORD_LENGTH} characters long.",
             "danger",
         )
         return RedirectResponse(
             url="/reset-password",
             status_code=status.HTTP_303_SEE_OTHER,
-        )
-
-    email = request.session.get("otp_email")
-    print(email)
-    if not email:
-        flash(
-            request,
-            "Your password reset session has expired. Please try again.",
-            "warning",
-        )
-        return RedirectResponse(
-            url="/forget-password", status_code=status.HTTP_303_SEE_OTHER
         )
 
     user = session.scalar(select(User).where(User.email == email))
@@ -586,17 +579,6 @@ def resend_otp(
         )
     user = session.scalar(select(User).where(User.email == email))
 
-    if not user:
-        flash(
-            request,
-            "User not found. Please sign in again.",
-            "danger",
-        )
-        return RedirectResponse(
-            url="/login",
-            status_code=status.HTTP_303_SEE_OTHER,
-        )
-
     if flow == "verification":
         email_sender = email_service.send_verification_otp_email
         redirect_url = "/verify-otp"
@@ -616,11 +598,31 @@ def resend_otp(
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
+    if not user:
+        # reset flow for an unknown email: respond as if an OTP was sent
+        if flow == "reset_password":
+            flash(request, "A new OTP has been sent to your email.", "success")
+            return RedirectResponse(
+                url=redirect_url,
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        flash(
+            request,
+            "User not found. Please sign in again.",
+            "danger",
+        )
+        return RedirectResponse(
+            url="/login",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
     otp_service.generate_and_send_otp(
         user=user,
         db=session,
         background_tasks=background_tasks,
         email_sender=email_sender,
+        request=request,
     )
     flash(
         request,
@@ -639,6 +641,7 @@ def logout(request: Request):
     request.session.pop("otp_email", None)
     request.session.pop("otp_flow", None)
     request.session.pop("reset_verified", None)
+    request.session.pop("otp_attempts", None)
     flash(
         request,
         "You have been signed out successfully.",
@@ -694,7 +697,7 @@ def account_activation(
         return RedirectResponse(url="/login", status_code=303)
 
     request.session.pop("activation_user_id", None)
-    request.session.pop("show_activation_button", None)
+    request.session.pop("show_activation_request", None)
 
     flash(
         request, "Your activation request has been submitted successfully.", "success"

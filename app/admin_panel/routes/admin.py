@@ -11,6 +11,7 @@ from database import get_db
 import math
 from models.activation_request import ActivationRequestStatus, AccountActivation
 from utils.flash import flash
+from utils.file_upload import delete_file
 from admin_panel.services.admin_service import (
     is_blog_exist,
     update_report_status,
@@ -68,15 +69,20 @@ def suspend_user(
     user = is_user_exist(user_id, session)
 
     if not user:
-        print("not found")
         flash(request, "User not found.", "danger")
         return RedirectResponse(
             url="/admin/users",
             status_code=303,
         )
 
+    if user.role == RoleChoice.SUPER_ADMIN:
+        flash(request, "Super admin accounts cannot be suspended.", "danger")
+        return RedirectResponse(
+            url="/admin/users",
+            status_code=303,
+        )
+
     if user.is_deleted:
-        print("already deleted")
         flash(request, "User is already suspended.", "warning")
         return RedirectResponse(
             url="/admin/users",
@@ -86,7 +92,6 @@ def suspend_user(
     soft_delete_user(user)
 
     session.commit()
-    print("success")
     flash(request, "User suspended successfully.", "success")
 
     return RedirectResponse(
@@ -137,8 +142,21 @@ def delete_user(
             status_code=303,
         )
 
+    if user.id == current_user.id or user.role == RoleChoice.SUPER_ADMIN:
+        flash(request, "Super admin accounts cannot be deleted here.", "danger")
+        return RedirectResponse(
+            url="/admin/users",
+            status_code=303,
+        )
+
+    media = [user.profile_image]
+    media += [path for blog in user.blogs for path in (blog.image, blog.video)]
+
     session.delete(user)
     session.commit()
+
+    for path in media:
+        delete_file(path)
 
     flash(request, "User deleted successfully.", "success")
 
@@ -252,8 +270,13 @@ def delete_blog(
             status_code=303,
         )
 
+    media = [blog.image, blog.video]
+
     session.delete(blog)
     session.commit()
+
+    for path in media:
+        delete_file(path)
 
     flash(request, "Blog deleted successfully.", "success")
 
@@ -377,19 +400,15 @@ def admin_account_activation_update(
 ):
     activation_request = is_activation_request_exist(activation_id, session)
     if not activation_request:
-        print("not found")
         flash(request, "Record not found.", "danger")
-        return RedirectResponse(url="/admin/activation-requests")
-    print(status)
+        return RedirectResponse(url="/admin/activation-requests", status_code=303)
     success, message = activation_status_update(activation_request, status)
 
     if not success:
-        print("false")
         flash(request, message, "danger")
         return RedirectResponse(url="/admin/activation-requests", status_code=303)
 
     session.commit()
 
     flash(request, message, "success")
-    print("success")
     return RedirectResponse(url="/admin/activation-requests", status_code=303)
