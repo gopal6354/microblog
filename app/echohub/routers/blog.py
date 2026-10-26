@@ -8,8 +8,7 @@ from utils.file_upload import save_file, IMAGE_DIR, VIDEO_DIR, FileUploadError
 from fastapi.responses import RedirectResponse
 from models.blogs import Blog
 from utils.flash import flash
-from echohub.routers.echohub import repost_target
-from echohub.services.notification_service import notify_mentions, notify_repost
+from echohub.services.notification_service import notify_mentions
 from echohub.services.post_service import (
     parse_schedule,
     post_content_error,
@@ -22,17 +21,9 @@ router = APIRouter()
 @router.get("/create-blog")
 def create_blog_page(
     request: Request,
-    quote: int | None = None,
     current_user: User = Depends(require_normal_user),
     session: Session = Depends(get_db),
 ):
-    quoted = None
-    if quote is not None:
-        quoted, error = repost_target(session, current_user, quote)
-        if error:
-            flash(request, error[0], "warning")
-            return RedirectResponse(url="/", status_code=303)
-
     return templates.TemplateResponse(
         request=request,
         name="/blog/blog.html",
@@ -40,7 +31,6 @@ def create_blog_page(
             "user": current_user,
             "is_edit": False,
             "blog": None,
-            "quoted": quoted,
             "flash": request.session.pop("_flash", None),
         },
     )
@@ -53,7 +43,6 @@ async def create_blog(
     location: str | None = Form(None),
     image: UploadFile | None = File(None),
     video: UploadFile | None = File(None),
-    quote_of: int | None = Form(None),
     action: str = Form("publish"),
     scheduled_at: str | None = Form(None),
     tz_offset: int | None = Form(None),
@@ -64,7 +53,7 @@ async def create_blog(
     video_path = None
     has_image = bool(image and image.filename)
     has_video = bool(video and video.filename)
-    form_url = f"/create-blog?quote={quote_of}" if quote_of else "/create-blog"
+    form_url = "/create-blog"
 
     content = content.strip()
 
@@ -75,13 +64,6 @@ async def create_blog(
             url=form_url,
             status_code=303,
         )
-
-    quoted = None
-    if quote_of is not None:
-        quoted, quote_error = repost_target(session, current_user, quote_of)
-        if quote_error:
-            flash(request, quote_error[0], "danger")
-            return RedirectResponse(url="/", status_code=303)
 
     is_draft = action == "draft"
     publish_at, schedule_error = (None, None)
@@ -120,7 +102,6 @@ async def create_blog(
         image=image_path,
         video=video_path,
         location=location or None,
-        repost_of_id=quoted.id if quoted else None,
         is_draft=is_draft,
     )
     if publish_at:
@@ -130,8 +111,6 @@ async def create_blog(
     sync_tags(session, new_blog)
     session.flush()
     notify_mentions(session, current_user.id, content, new_blog)
-    if quoted:
-        notify_repost(session, quoted, new_blog)
     session.commit()
     session.refresh(new_blog)
 

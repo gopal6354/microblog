@@ -1022,7 +1022,7 @@ a.action-btn{
     color:var(--primary-color);
 }
 
-.quoted-post{
+.embedded-post{
     display:block;
     margin-top:12px;
     padding:12px 14px;
@@ -1032,22 +1032,22 @@ a.action-btn{
     text-decoration:none;
 }
 
-.quoted-post:hover{
+.embedded-post:hover{
     background:var(--hover-color);
 }
 
-.quoted-post-author small{
+.embedded-post-author small{
     margin-left:6px;
     color:var(--muted-color);
 }
 
-.quoted-post-text{
+.embedded-post-text{
     margin:6px 0 0;
     white-space:pre-line;
     overflow-wrap:anywhere;
 }
 
-.quoted-post-media{
+.embedded-post-media{
     width:100%;
     max-height:240px;
     object-fit:cover;

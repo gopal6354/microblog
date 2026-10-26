@@ -86,12 +86,6 @@
 
         {% endif %}
 
-        {% if post.repost_of %}
-        {% with quoted=post.repost_of %}
-        {% include "partials/quoted_post.html" %}
-        {% endwith %}
-        {% endif %}
-
     </div>
 
 
@@ -123,9 +117,6 @@
                 <span class="repost-count">{{ post.repost_count }}</span>
             </button>
 
-            <a href="/create-blog?quote={{ post.id }}" class="action-btn" aria-label="Quote post" title="Quote post">
-                <i class="bi bi-quote"></i>
-            </a>
             {% endif %}
 
             <button type="button" class="action-btn bookmark-btn" data-blog-id="{{ post.id }}"

@@ -69,7 +69,7 @@ def notification_time(blog):
 
 def notify_repost(session: Session, original, repost):
     """Point at the repost itself so undoing it removes the notification."""
-    if repost.user_id == original.user_id or repost.is_draft:
+    if repost.user_id == original.user_id:
         return
     session.add(
         Notification(
@@ -77,7 +77,6 @@ def notify_repost(session: Session, original, repost):
             actor_id=repost.user_id,
             type=NotificationType.REPOST,
             blog=repost,
-            created_at=notification_time(repost),
         )
     )
 

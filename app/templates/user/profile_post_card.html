@@ -83,8 +83,8 @@
         {% endif %}
 
         {% if blog.repost_of %}
-        {% with quoted=blog.repost_of %}
-        {% include "partials/quoted_post.html" %}
+        {% with original=blog.repost_of %}
+        {% include "partials/embedded_post.html" %}
         {% endwith %}
         {% endif %}
 

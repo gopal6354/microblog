@@ -300,21 +300,6 @@ def test_cannot_repost_own_or_private_post(client, db, make_user):
     assert client.post(f"/blog/{private.id}/repost").status_code == 403
 
 
-def test_quote_post(client, db, make_user):
-    alice = make_user("alice")
-    make_user("bob")
-    blog = make_blog(db, alice, "original words")
-    login(client, "bob")
-
-    post(client, "my take", quote_of=blog.id)
-
-    quote = db.query(Blog).filter_by(content="my take").one()
-    assert quote.repost_of_id == blog.id
-    page = client.get(f"/post/{quote.id}").text
-    assert "my take" in page and "original words" in page
-    assert db.query(Notification).filter_by(type=NotificationType.REPOST).count() == 1
-
-
 def test_deleting_original_removes_reposts(client, db, make_user):
     alice = make_user("alice")
     bob = make_user("bob")

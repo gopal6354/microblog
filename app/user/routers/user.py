@@ -30,7 +30,6 @@ from echohub.services.notification_service import (
     notify_follow,
     notify_follow_request,
     notify_mentions,
-    notify_repost,
 )
 from echohub.services.post_service import post_content_error, sync_tags
 from utils.text import extract_mentions
@@ -347,8 +346,6 @@ def publish_blog(
     # drafts never notified anyone; scheduled posts did, timed for going live
     if was_draft:
         notify_mentions(session, current_user.id, blog.content, blog)
-        if blog.repost_of:
-            notify_repost(session, blog.repost_of, blog)
     else:
         for notification in blog.notifications:
             notification.created_at = blog.published_at

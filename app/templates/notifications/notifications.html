@@ -89,8 +89,6 @@ EchoHub | Notifications
                 replied to your comment
                 {% elif notification.type == NotificationType.MENTION %}
                 mentioned you in {{ "a comment" if notification.comment_id else "a post" }}
-                {% elif blog and blog.content %}
-                quoted your post
                 {% else %}
                 reposted your post
                 {% endif %}
@@ -101,12 +99,9 @@ EchoHub | Notifications
             <a href="/post/{{ target.id if target else notification.blog_id }}" class="notification-preview">
                 {% if notification.comment %}
                 <span class="notification-comment">“{{ notification.comment.content|truncate(140) }}”</span>
-                {% elif notification.type == NotificationType.REPOST and blog and blog.content %}
-                <span class="notification-comment">“{{ blog.content|truncate(140) }}”</span>
                 {% endif %}
                 {% if target %}
-                {% set preview = target.repost_of if notification.type == NotificationType.REPOST and target.repost_of else target %}
-                <span class="notification-post">{{ preview.content|truncate(80) }}</span>
+                <span class="notification-post">{{ target.content|truncate(80) }}</span>
                 {% endif %}
             </a>
 

@@ -31,7 +31,7 @@ class Blog(Base):
         default=False,
         nullable=False,
     )
-    # set for reposts; a plain repost has empty content, a quote post has its own
+    # set for reposts, which have empty content and show the original post
     repost_of_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("blogs.id", ondelete="CASCADE"), nullable=True, index=True
     )
