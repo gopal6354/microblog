@@ -39,12 +39,8 @@ def is_blocked_between(session: Session, user_a_id: int, user_b_id: int):
     )
 
 
-def _live(blog_cls, now):
-    return and_(
-        blog_cls.is_hidden.is_(False),
-        blog_cls.is_draft.is_(False),
-        blog_cls.published_at <= now,
-    )
+def _live(blog_cls):
+    return and_(blog_cls.is_hidden.is_(False), blog_cls.is_draft.is_(False))
 
 
 def _audience(author_cls, viewer: User | None):
@@ -62,12 +58,11 @@ def _audience(author_cls, viewer: User | None):
 def visible_blogs_query(viewer: User | None, include_muted: bool = False):
     """Posts the viewer may see, with what the post card needs eager loaded.
 
-    Excludes hidden, draft and scheduled posts, suspended and blocked/muted
+    Excludes hidden and draft posts, suspended and blocked/muted
     authors, private authors the viewer doesn't follow, and reposts whose
     original fails any of those checks. `include_muted` keeps muted authors,
     for when the viewer goes looking for them (their profile, a direct link).
     """
-    now = datetime.utcnow()
     original = aliased(Blog)
     original_author = aliased(User)
 
@@ -86,13 +81,13 @@ def visible_blogs_query(viewer: User | None, include_muted: bool = False):
             selectinload(Blog.repost_of).options(*card_options),
         )
         .where(
-            _live(Blog, now),
+            _live(Blog),
             User.is_deleted.is_(False),
             _audience(User, viewer),
             or_(
                 Blog.repost_of_id.is_(None),
                 and_(
-                    _live(original, now),
+                    _live(original),
                     original_author.is_deleted.is_(False),
                     _audience(original_author, viewer),
                 ),
@@ -146,7 +141,7 @@ def trending_tags(session: Session, limit: int = 5, days: int = 7):
         .join(Blog, Blog.id == blog_tags.c.blog_id)
         .join(User, Blog.user_id == User.id)
         .where(
-            _live(Blog, now),
+            _live(Blog),
             Blog.published_at >= now - timedelta(days=days),
             User.is_deleted.is_(False),
             User.is_private.is_(False),

@@ -19,8 +19,6 @@
                 <span class="mx-1">•</span>
                 {% if blog.is_draft %}
                 Draft · saved {{ blog.created_at.strftime("%d %b %Y") }}
-                {% elif blog.is_scheduled %}
-                Scheduled for {{ blog.published_at.strftime("%d %b %Y, %H:%M") }} UTC
                 {% else %}
                 <a href="/post/{{ blog.id }}">{{ blog.published_at.strftime("%d %b %Y") }}</a>
                 {% endif %}
@@ -30,7 +28,7 @@
 
         <div class="profile-post-actions">
 
-            {% if blog.is_draft or blog.is_scheduled %}
+            {% if blog.is_draft %}
             <form action="/user-blog/{{ blog.id }}/publish" method="POST" class="m-0">
                 <button type="submit" class="action-icon" title="Publish now" aria-label="Publish now">
                     <i class="bi bi-send"></i>

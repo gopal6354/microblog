@@ -594,19 +594,3 @@ document.querySelectorAll(".repost-btn").forEach(button => {
         }
     });
 });
-
-// ================================
-// Scheduling
-// ================================
-
-// the server stores UTC, so send the browser's offset with a scheduled time
-document.querySelectorAll(".tz-offset").forEach(input => {
-    input.value = new Date().getTimezoneOffset();
-});
-
-const scheduleInput = document.getElementById("scheduled-at");
-if (scheduleInput) {
-    const now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    scheduleInput.min = now.toISOString().slice(0, 16);
-}

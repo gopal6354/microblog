@@ -45,7 +45,7 @@ from utils.pagination import Page, paginate
 
 router = APIRouter()
 
-PROFILE_TABS = ("posts", "drafts", "scheduled")
+PROFILE_TABS = ("posts", "drafts")
 
 # max lengths match the User model columns
 PROFILE_FIELD_LIMITS = {"username": 50, "full_name": 50, "bio": 150}
@@ -55,14 +55,11 @@ FOLLOW_PAGE_SIZE = 20
 
 
 def own_posts_query(user_id: int, tab: str):
-    now = datetime.utcnow()
-    query = select(Blog).where(Blog.user_id == user_id, Blog.is_hidden.is_(False))
-    if tab == "drafts":
-        query = query.where(Blog.is_draft.is_(True))
-    elif tab == "scheduled":
-        query = query.where(Blog.is_draft.is_(False), Blog.published_at > now)
-    else:
-        query = query.where(Blog.is_draft.is_(False), Blog.published_at <= now)
+    query = select(Blog).where(
+        Blog.user_id == user_id,
+        Blog.is_hidden.is_(False),
+        Blog.is_draft.is_(tab == "drafts"),
+    )
     return query.options(selectinload(Blog.repost_of).selectinload(Blog.user))
 
 
@@ -334,21 +331,14 @@ def publish_blog(
     session: Session = Depends(get_db),
     current_user: User = Depends(require_normal_user),
 ):
-    """Publish a draft or a scheduled post right away."""
     blog = session.get(Blog, blog_id)
-    if not blog or blog.user_id != current_user.id:
+    if not blog or blog.user_id != current_user.id or not blog.is_draft:
         return RedirectResponse(url="/user-blogs", status_code=303)
 
-    was_draft = blog.is_draft
     blog.is_draft = False
     blog.published_at = datetime.utcnow()
-
-    # drafts never notified anyone; scheduled posts did, timed for going live
-    if was_draft:
-        notify_mentions(session, current_user.id, blog.content, blog)
-    else:
-        for notification in blog.notifications:
-            notification.created_at = blog.published_at
+    # drafts don't notify anyone until they are published
+    notify_mentions(session, current_user.id, blog.content, blog)
     session.commit()
 
     flash(request, "Post published.", "success")

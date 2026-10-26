@@ -36,7 +36,7 @@ class Blog(Base):
         ForeignKey("blogs.id", ondelete="CASCADE"), nullable=True, index=True
     )
     is_draft: Mapped[bool] = mapped_column(default=False, nullable=False)
-    # when the post goes live; a future value means it is scheduled
+    # when the post went public; for drafts it is set again on publish
     published_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, nullable=False, index=True
     )
@@ -64,7 +64,3 @@ class Blog(Base):
     @property
     def is_plain_repost(self):
         return self.repost_of_id is not None and not self.content
-
-    @property
-    def is_scheduled(self):
-        return not self.is_draft and self.published_at > datetime.utcnow()

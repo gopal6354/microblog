@@ -10,7 +10,6 @@ from models.blogs import Blog
 from utils.flash import flash
 from echohub.services.notification_service import notify_mentions
 from echohub.services.post_service import (
-    parse_schedule,
     post_content_error,
     sync_tags,
 )
@@ -44,8 +43,6 @@ async def create_blog(
     image: UploadFile | None = File(None),
     video: UploadFile | None = File(None),
     action: str = Form("publish"),
-    scheduled_at: str | None = Form(None),
-    tz_offset: int | None = Form(None),
     session: Session = Depends(get_db),
     current_user: User = Depends(require_normal_user),
 ):
@@ -66,12 +63,6 @@ async def create_blog(
         )
 
     is_draft = action == "draft"
-    publish_at, schedule_error = (None, None)
-    if not is_draft:
-        publish_at, schedule_error = parse_schedule(scheduled_at, tz_offset)
-    if schedule_error:
-        flash(request, schedule_error, "danger")
-        return RedirectResponse(url=form_url, status_code=303)
 
     if has_image and has_video:
         flash(request, "You can upload either an image or a video, not both.", "danger")
@@ -104,8 +95,6 @@ async def create_blog(
         location=location or None,
         is_draft=is_draft,
     )
-    if publish_at:
-        new_blog.published_at = publish_at
 
     session.add(new_blog)
     sync_tags(session, new_blog)
@@ -117,9 +106,6 @@ async def create_blog(
     if is_draft:
         flash(request, "Draft saved.", "success")
         return RedirectResponse(url="/user-blogs?tab=drafts", status_code=303)
-    if publish_at:
-        flash(request, "Post scheduled.", "success")
-        return RedirectResponse(url="/user-blogs?tab=scheduled", status_code=303)
 
     return RedirectResponse(
         url="/",

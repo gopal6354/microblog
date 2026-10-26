@@ -93,9 +93,6 @@ EchoHub | Profile
             <a href="/user-blogs?tab=drafts" class="{% if active_tab == 'drafts' %}active{% endif %}">
                 Drafts
             </a>
-            <a href="/user-blogs?tab=scheduled" class="{% if active_tab == 'scheduled' %}active{% endif %}">
-                Scheduled
-            </a>
             <!--
     <a href="/user-blogs?tab=likes"
        class="{% if active_tab == 'likes' %}active{% endif %}">
@@ -121,9 +118,6 @@ EchoHub | Profile
                 {% if active_tab == "drafts" %}
                 <h5>No Drafts</h5>
                 <p>Choose "Save as draft" when writing a post to finish it later.</p>
-                {% elif active_tab == "scheduled" %}
-                <h5>No Scheduled Posts</h5>
-                <p>Pick a date and time when writing a post to publish it later.</p>
                 {% else %}
                 <h5>No Posts Yet</h5>
                 <p>Share your first blog with the EchoHub community.</p>

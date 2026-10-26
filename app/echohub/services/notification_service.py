@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
@@ -61,12 +59,6 @@ def notify_follow_request(session: Session, follow_request):
     )
 
 
-def notification_time(blog):
-    # a scheduled post's notifications stay hidden until the post goes live
-    now = datetime.utcnow()
-    return max(now, blog.published_at) if blog.published_at else now
-
-
 def notify_repost(session: Session, original, repost):
     """Point at the repost itself so undoing it removes the notification."""
     if repost.user_id == original.user_id:
@@ -117,7 +109,6 @@ def notify_mentions(session: Session, actor_id: int, text, blog, comment=None, s
                 type=NotificationType.MENTION,
                 blog=blog,
                 comment=comment,
-                created_at=notification_time(blog),
             )
         )
 
@@ -131,7 +122,6 @@ def visible_notifications_query(user_id: int):
             Notification.recipient_id == user_id,
             User.is_deleted.is_(False),
             Notification.actor_id.not_in(hidden_user_ids_query(user_id)),
-            Notification.created_at <= datetime.utcnow(),
         )
     )
 

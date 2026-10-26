@@ -1,5 +1,3 @@
-from datetime import datetime, timedelta
-
 from conftest import login, PASSWORD
 from models import Blog, Block, Bookmark, Comment, Follow, FollowRequest, Notification
 from models.notification import NotificationType
@@ -430,7 +428,7 @@ def test_private_follow_list_is_hidden(client, make_user):
     assert response.headers["location"] == "/profile/alice"
 
 
-# drafts & scheduled posts
+# drafts
 
 
 def test_draft_is_hidden_until_published(client, db, make_user):
@@ -449,37 +447,3 @@ def test_draft_is_hidden_until_published(client, db, make_user):
 
     assert "draft for" in client.get("/").text
     assert db.query(Notification).count() == 1
-
-
-def test_scheduled_post_and_its_notifications_wait(client, db, make_user):
-    make_user("alice")
-    bob = make_user("bob")
-    login(client, "alice")
-    when = (datetime.utcnow() + timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M")
-
-    post(client, "later @bob", scheduled_at=when, tz_offset=0)
-
-    blog = db.query(Blog).one()
-    assert blog.is_scheduled
-    assert "later" not in client.get("/").text
-    assert "later" in client.get("/user-blogs?tab=scheduled").text
-
-    login(client, "bob")
-    assert "mentioned you" not in client.get("/notifications").text
-
-    # once it goes live, both the post and the mention appear
-    blog.published_at = datetime.utcnow() - timedelta(minutes=1)
-    db.query(Notification).update({"created_at": blog.published_at})
-    db.commit()
-    assert "later" in client.get("/").text
-    assert db.query(Notification).filter_by(recipient_id=bob.id).count() == 1
-
-
-def test_schedule_in_past_is_rejected(client, db, make_user):
-    make_user("alice")
-    login(client, "alice")
-
-    response = post(client, "too late", scheduled_at="2000-01-01T10:00", tz_offset=0)
-
-    assert response.headers["location"] == "/create-blog"
-    assert db.query(Blog).count() == 0
