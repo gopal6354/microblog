@@ -66,11 +66,13 @@ class User(Base):
     notifications = relationship(
         "Notification",
         foreign_keys="Notification.recipient_id",
+        back_populates="recipient",
         cascade="all,delete-orphan",
     )
     sent_notifications = relationship(
         "Notification",
         foreign_keys="Notification.actor_id",
+        back_populates="actor",
         cascade="all,delete-orphan",
     )
 

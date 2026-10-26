@@ -179,26 +179,63 @@ async function reverseGeocode(latitude, longitude) {
 }
 
 if (locationButton && locationInput && locationStatus) {
+    const locationForm = locationButton.form;
+    const locationSubmitButton = locationForm?.querySelector('[type="submit"]');
+    const locationClearButton = document.getElementById("location-clear-button");
+    let locationLookupPending = false;
+
+    // Keep the post from being submitted before the place name arrives.
+    function setLocationPending(pending) {
+        locationLookupPending = pending;
+        locationButton.disabled = pending;
+        if (locationSubmitButton) locationSubmitButton.disabled = pending;
+    }
+
+    function setLocation(placeName, message) {
+        locationInput.value = placeName;
+        locationStatus.textContent = message;
+        if (locationClearButton) locationClearButton.hidden = !placeName;
+    }
+
+    if (locationForm) {
+        locationForm.addEventListener("submit", function (event) {
+            if (locationLookupPending) event.preventDefault();
+        });
+    }
+
+    if (locationClearButton) {
+        locationClearButton.addEventListener("click", function () {
+            setLocation("", "");
+        });
+    }
+
     locationButton.addEventListener("click", function () {
+        if (!window.isSecureContext) {
+            locationStatus.textContent = "Location needs HTTPS or localhost.";
+            return;
+        }
         if (!navigator.geolocation) {
             locationStatus.textContent = "Location is not available in this browser.";
             return;
         }
 
+        setLocationPending(true);
         locationStatus.textContent = "Sharing your coordinates with OpenStreetMap to find a place name...";
         navigator.geolocation.getCurrentPosition(
             async position => {
                 const { latitude, longitude } = position.coords;
                 try {
-                    locationInput.value = await reverseGeocode(latitude, longitude);
-                    locationStatus.textContent = `Location added: ${locationInput.value}`;
+                    const placeName = await reverseGeocode(latitude, longitude);
+                    setLocation(placeName, `Location added: ${placeName}`);
                 } catch (error) {
-                    locationInput.value = "";
-                    locationStatus.textContent = "Couldn't find a place name. Please try again.";
+                    setLocation("", "Couldn't find a place name. Please try again.");
+                } finally {
+                    setLocationPending(false);
                 }
             },
             () => {
-                locationStatus.textContent = "Location was unavailable or permission was denied.";
+                setLocation(locationInput.value, "Location was unavailable or permission was denied.");
+                setLocationPending(false);
             },
             { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
         );

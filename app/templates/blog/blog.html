@@ -142,6 +142,50 @@ EchoHub | Create Blog
                         </div>
 
 
+                        {% if not is_edit %}
+                        <!-- Location -->
+
+                        <div class="mb-4">
+
+                            <label class="form-label fw-semibold">
+                                Location
+                            </label>
+
+                            <div class="d-flex align-items-center flex-wrap gap-2">
+
+                                <button
+                                    type="button"
+                                    id="location-button"
+                                    class="btn btn-outline-secondary rounded-pill">
+
+                                    <i class="bi bi-geo-alt me-1"></i>
+                                    Add location
+
+                                </button>
+
+                                <button
+                                    type="button"
+                                    id="location-clear-button"
+                                    class="btn btn-link btn-sm text-danger"
+                                    hidden>
+
+                                    Remove
+
+                                </button>
+
+                                <input type="hidden" id="post-location" name="location">
+                                <small id="post-location-status" class="text-body-secondary" aria-live="polite"></small>
+
+                            </div>
+
+                            <div class="form-text">
+                                Optional
+                            </div>
+
+                        </div>
+                        {% endif %}
+
+
                         <!-- Buttons -->
 
                         <div class="d-flex justify-content-end gap-2">

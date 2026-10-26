@@ -39,8 +39,12 @@ class Notification(Base):
     is_read: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
-    recipient = relationship("User", foreign_keys=[recipient_id])
-    actor = relationship("User", foreign_keys=[actor_id])
-    blog = relationship("Blog")
+    recipient = relationship(
+        "User", foreign_keys=[recipient_id], back_populates="notifications"
+    )
+    actor = relationship(
+        "User", foreign_keys=[actor_id], back_populates="sent_notifications"
+    )
+    blog = relationship("Blog", back_populates="notifications")
     comment = relationship("Comment", back_populates="notifications")
     follow = relationship("Follow", back_populates="notifications")

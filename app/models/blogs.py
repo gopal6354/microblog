@@ -39,4 +39,6 @@ class Blog(Base):
         cascade="all,delete-orphan",
         order_by="Comment.created_at",
     )
-    notifications = relationship("Notification", cascade="all,delete-orphan")
+    notifications = relationship(
+        "Notification", back_populates="blog", cascade="all,delete-orphan"
+    )
