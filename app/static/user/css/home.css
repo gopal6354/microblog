@@ -102,6 +102,48 @@
 
     flex:1;
 
+    min-width:0;
+
+}
+
+
+
+.create-post-attachments{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:4px;
+
+}
+
+
+
+.attachment-info{
+
+    display:block;
+
+    max-width:100%;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+
+    color:var(--muted-color);
+
+    font-size:13px;
+
+}
+
+
+
+.attachment-info:empty{
+
+    display:none;
+
 }
 
 
@@ -156,9 +198,13 @@
 
     display:flex;
 
+    flex-wrap:wrap;
+
     justify-content:space-between;
 
     align-items:center;
+
+    gap:10px;
 
     margin-top:15px;
 
@@ -174,7 +220,13 @@
 
     display:flex;
 
+    flex-wrap:wrap;
+
+    align-items:center;
+
     gap:8px;
+
+    min-width:0;
 
     position:relative;
 
@@ -269,6 +321,10 @@
     align-items:center;
 
     gap:15px;
+
+    margin-left:auto;
+
+    flex-shrink:0;
 
 }
 
