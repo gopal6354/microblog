@@ -418,3 +418,6 @@ def report_blog(
         session.rollback()
         return RedirectResponse(url="/", status_code=303)
     return RedirectResponse(url="/", status_code=303)
+
+
+print("Echohub router loaded successfully.")
